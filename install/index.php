@@ -17,7 +17,7 @@ $path = dirname(dirname(__FILE__));
 set_include_path('.' . PATH_SEPARATOR . "$path/libs" . PATH_SEPARATOR . "$path/libs/Atmail" . PATH_SEPARATOR . "$path/libs/PEAR");
 
 // Report all errors except E_NOTICE
-error_reporting(E_ALL ^ E_NOTICE);
+error_reporting(E_ALL ^ E_NOTICE ^ E_DEPRECATED);
 
 if (file_exists('../libs/Atmail/Config.php'))
     include_once('../libs/Atmail/Config.php');
