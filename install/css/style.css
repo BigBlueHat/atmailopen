@@ -1,0 +1,168 @@
+body {
+	padding: 5px;
+	font: 12px Verdana, Geneva, Arial, Helvetica, sans-serif;
+	color: #4A4956;	
+}
+
+label {
+	font: 12px Verdana, Geneva, Arial, Helvetica, sans-serif;
+	color: #4A4956;	
+}
+A, A:LINK, A:ACTIVE	{ color: #B0B0B0; }
+
+h1 {font-size: 200%;
+padding-bottom: 2px;
+font-weight: bold;}
+
+h2 {font-size: 160%; COLOR: #0068af}
+
+#container {
+	width: 790px;
+	padding: 0;
+	background: url(../images/page_bg.png) repeat-y;
+}
+
+#top {
+	width: 790px;
+	height: 10px;
+	background: url(../images/top.png) no-repeat;
+}
+
+#header {
+	background: url(../images/header_bg.png) repeat-x;
+	width: 765px;
+	height: 77px;
+	margin-left: 10px;
+	padding-left: 5px;
+	padding-top: 4px;
+}
+
+#content {
+	margin: 0 20px 10px 20px;
+	width: 750px;
+}
+
+#logo {
+	background: url(../images/logo.png) no-repeat;
+	width: 156px;
+	height: 48px;
+}
+
+#bottom {
+	background: url(../images/bottom.png) no-repeat;
+	width: 790px;
+	height: 10px;
+}
+
+#progress_bar {
+	position: absolute;
+	left: 620px;
+	top: 60px;
+}
+
+#progress_bar div {
+	width: 15px;
+	height: 15px;
+	background-color: #CCC;
+	float: left;
+	margin: 3px;
+}
+
+#progress_bar div a {
+	display: block;
+	width: 15px;
+	height: 15px;
+}
+
+td {
+	font-family: Verdana, Arial, Helvetica;
+	font-size: 11px;
+	padding: 2px 5px 9px 0;
+}
+
+span.error {
+	color: red;
+	font-weight: bold;
+	margin-left: 10px;
+}
+
+span.warning {
+	color: #cccccc;
+	font-weight: bold;
+	margin-left: 10px;
+}
+
+div.error,div.warning A {
+	color: red;
+}
+
+td.info {
+	border-top: 1px solid #CCC;
+	border-bottom: 1px solid #CCC;
+	background-color: #EEE;
+	padding: 4px;
+}
+
+code {
+	color: #666;
+	font-weight: normal;
+}
+
+div.error {
+	background: url(../images/error.png) top left no-repeat #FFD5D5;
+	border: 2px solid #C00;
+	padding: 1em;
+	margin: 10px 0;
+}
+
+div.warning {
+	background: url(../images/error.png) top left no-repeat #DDDDDD;
+	border: 2px solid #CDCDCD;
+	padding: 1em;
+	margin: 10px 0;
+}
+
+div.error h3 {
+	color: #C00;
+	margin: 0 0 1em 30px;
+}
+
+tr.error { background-color: #FFD5D5;}
+
+#infobox {
+	background: url(../images/info.png) no-repeat top left #D9F2FF;
+	padding: 30px 1em 1em 1em;
+	margin: 5px;
+	display: none;
+}
+
+
+li.required {
+
+	list-style-image: url(../images/cross.gif);
+	display:list-item;
+
+	}
+
+
+li.installed {
+
+	list-style-image: url(../images/tick.gif);
+	display:list-item;
+
+	}
+
+
+li.dl {
+
+	list-style-image: url(http://atmail.com/images/dl.gif);
+	display:list-item;
+
+}
+
+li.optional {
+
+	list-style-image: url(../images/optional.gif);
+	display:list-item;
+
+}

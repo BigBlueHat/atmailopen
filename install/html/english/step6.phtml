@@ -1,0 +1,89 @@
+<script type="text/javascript">
+function toggleInfo(type)
+{
+	if (type) {
+		document.migrateform.button.disabled = false;
+		document.getElementById('db_info').style.display='block';
+	} else {
+		document.migrateform.button.disabled = true;
+		document.getElementById('db_info').style.display='none';
+	}
+
+	if (type == 'horde') {
+		document.getElementById('info_rc').style.display='none';
+		document.getElementById('info_sq').style.display='none';
+		document.getElementById('info_horde').style.display='block';
+	} else if (type == 'rc') {
+		document.getElementById('info_horde').style.display='none';
+		document.getElementById('info_sq').style.display='none';
+		document.getElementById('info_rc').style.display='block';
+	} else if (type == 'sq') {
+		document.getElementById('info_horde').style.display='none';
+		document.getElementById('info_rc').style.display='none';
+		document.getElementById('info_sq').style.display='block';
+	} else {
+		document.getElementById('info_horde').style.display='none';
+		document.getElementById('info_rc').style.display='none';
+		document.getElementById('info_sq').style.display='none';
+	}
+}
+
+function doMigrate()
+{
+	var type = document.migrateform.migrate.value;
+	var dbname = document.migrateform.dbname.value;
+	var dbuser = document.migrateform.dbuser.value;
+	var dbpass = document.migrateform.dbpass.value;
+	var url = 'index.php?step=6&migrate=' + type + '&dbname=' + dbname + '&dbuser=' + dbuser + '&dbpass=' + dbpass;
+	
+	// ajax call
+	new Ajax.Updater('migrate_output', url, { method: 'get' });
+	
+	// On completion of ajax call disable the migrate
+	// fields
+	document.getElementById('db_info').style.display='none';
+	document.getElementById('info_horde').style.display='none';
+	document.getElementById('info_rc').style.display='none';
+	document.getElementById('info_sq').style.display='none';
+	
+}
+</script>
+
+<h2>Step 6: Migrate from Another Webmail System</h2>
+
+<p>If you are migrating from another Webmail system then select the 
+software your are migrating from the select box and click 'Migrate'. If you are starting a fresh install
+or your system is not listed then click 'Continue'</p>
+
+
+<div style="width: 300px; float: left;">
+	<form name="migrateform">
+		<select name="migrate" onchange="toggleInfo(this.value)">
+			<option value=""> -- Skip --</option>
+			<option value="horde">Horde</option>
+			<option value="rc">RoundCube</option>
+			<option value="sq">SquirrelMail</option>
+		</select>
+		<div id="db_info" style="display:none;">
+		<table>
+		<tr><td>DB Name:</td><td><input name="dbname" value="" type="text"></td></tr>
+		<tr><td>DB User:</td><td><input name="dbuser" value="" type="text"></td></tr>
+		<tr><td>DB Pass:</td><td><input name="dbpass" value="" type="password"></td></tr>
+		</table>
+		<input type="button" onclick="doMigrate()" name="button" value="Migrate">
+		<br><br>
+		</div>
+		
+		<input type="button" onclick="document.location='index.php?step=7'" value="Continue &gt;&gt;">
+	</form>
+</div>
+	
+<div style="width: 400px; float: left">
+	<div id="info_horde" style="display:none;">Fill in your database details and click 'Migrate' to migrate your Horde users address book information into Atmail</div>
+	<div id="info_rc" style="display:none;">Fill in your  database details and click 'Migrate' to migrate your RoundCube users address book information into Atmail</div>
+	<div id="info_sq" style="display:none;">Fill in your  database details and click 'Migrate' to migrate your SquirrelMail users address book information into Atmail</div>
+</div>
+
+<div id="migrate_output" style="clear:both;">
+
+</div>

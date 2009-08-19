@@ -1,0 +1,80 @@
+<h2>Installation Complete</h2>
+<p>The Atmail WebMail Client is now configured and ready to use.</p>
+
+<?php if($var['webadmin_insecure']): ?>
+<div class="error">
+<h3>Warning</h3>
+<p>A .htaccess file could not be created in <code><?php echo $var['install_dir'] ?>/webadmin/</code>.
+This leaves the webadmin unprotected against unauthorized access. To protect webadmin please
+do the following:</p>
+<ol>
+	<li>To make sure apache can create files in the webadmin directory, at a command line type: <code>chmod 777 <?php echo $var['install_dir'] ?>/webadmin/</code></li>
+	<li>Go to <a href="<?php echo $var['webadmin_url'] ?>"><?php $var['webadmin_url'] ?></a>, Click "Security" on top menu then "Admin Password" on side menu and set your
+	username and password</li>
+</ol>
+</div>
+<?php endif; ?>
+
+<?php if($var['htaccess_error']): ?>
+<div class="error">
+<h3>Warning</h3>
+<p>A .htaccess file could not be created in
+<code><?php echo $var['install_dir'] ?>/install/</code>. To prevent further access to the installer you will
+need to create a file called <code>.htaccess</code> in <code><?php echo $var['install_dir'] ?>/install/</code>
+and place the following in it:</p>
+
+<p><code><pre>
+&lt;FilesMatch "\.(php|html)$"&gt;
+order allow,deny
+deny from all
+&lt;/Files&gt;
+</pre></code></p>
+
+<p>Alternatively you may wish to archive, move or otherwise make the install directory unavailable
+to the webserver.</p>
+</div>
+<?php endif; ?>
+
+<?php if ($var['missing_ext']): 
+echo $var['missing_ext']; 
+endif; ?>
+
+<?php if($var['rename_error']): ?>
+<div class="error">
+<h3>Warning</h3>
+<p>Could not rename <code><?php echo $var['install_dir'] ?>/_index.php</code> to
+<code><?php echo $var['install_dir'] ?>/index.php</code>. Please do this manually so your login page can be accessed.</p>
+</div>
+<?php endif; ?>
+
+<?php if(!$var['htaccess_error']): ?>
+<p>Please note that a .htaccess file was created in the <code><?php echo $var['install_dir'] ?>/install</code> directory
+to prevent a malicous re-installation. If for some reason you wish to re-run the installer
+you will need to delete this file.</p>
+<?php endif; ?>
+
+<?php if($_SESSION['pref']['install_type'] != 'server'): ?>
+<p><input type="button" value="Login to Webmail" onClick="document.location='<?php echo $var['login_url'] ?>/'"></p>
+<?php endif; ?>
+
+<?php if($_SESSION['pref']['install_type'] != 'server' && !defined('ATMAIL_OPEN_SOURCE')): ?>
+<p><input type="button" value="Access Webadmin" onClick="document.location='<?php echo $var['login_url'] ?>/webadmin/'"></p>
+<?php endif; ?>
+
+<?php if($_SESSION['pref']['install_type'] == 'server'): ?>
+<p>During installation you selected to install Atmail in full mailserver mode, you will now
+need to perform the following steps to install the Atmail mailserver system:</p>
+<ol>
+	<li><code># tar xvfz atmail-server.tgz -C /usr/local/</li>
+	<li><code># cd /usr/local/atmail/</code></li>
+	<li>For non Linux systems ( FreeBSD, Solaris, etc ) before running the <code>server-install.php</code>
+	script, the username <code>atmail</code> must be created as a system account. Using the <code>useradd</code>
+	or <code>adduser</code> utility depending on your OS. The UID of the new user must be UID 3000.
+	For Linux systems the <code>server-install.php</code> script will automatically add the user-account
+	to the system.</li>
+	<li><code># php server-install.php</code></li>
+</ol>
+<?php endif; ?>
+
+<p>
+<p><strong>Thank you for choosing Atmail!</strong></p>

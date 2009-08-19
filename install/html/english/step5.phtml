@@ -1,0 +1,85 @@
+<script type="text/javascript">
+function checkForm(form)
+{
+	var errors = '';
+
+	if (form.username.value == '')
+	errors = '<li>Please enter a username</li>';
+	if (form.password.value.length < 4)
+	    errors += '<li>Please enter a password with at least 4 characters</li>';
+
+	if (form.password.value != form.confirm_password.value)
+	   errors += '<li>Passwords Mismatch.</li>';
+
+	if (errors)
+	{
+		var error_box = document.getElementById('errors');
+		var error_list = document.getElementById('error_list');
+		error_list.innerHTML = errors;
+		error_box.style.display = 'block';
+		return false;
+	}
+
+	return true;
+}
+</script>
+
+<h2>Step 5: Secure the Webadmin and Atmail</h2>
+
+<?php if(PHP_OS != 'Darwin'): ?>
+<p>To prevent unauthorized access to Atmail's WebAdmin and temporary files, 
+htaccess support via the Webserver must be enabled and a password set for 
+Webadmin access. The authentication process requires that your Apache 
+configuration file (httpd.conf) has the following lines:</p>
+<blockquote>
+	<code>AccessFileName .htaccess</code><br>
+	<code>&lt;Directory "<?php echo $var['installDir'] ?>/"&gt;<br>AllowOverride All<br>&lt;/Directory&gt;</code>
+</blockquote>
+
+<p>The directory syntax is required for Apache to recognize the password security on the Webadmin directory. 
+This must be implemented in your Webserver configuration file, then restart Apache for changes to take effect.</p>
+
+<div id="errors" style="display: none" class="error">
+<h3>Error</h3>
+<p>Please perform the following actions and re-submit</p>
+<ul id="error_list">
+</ul>
+</div>
+<?php else: ?>
+<p>To prevent unauthorized access to Atmail's WebAdmin and temporary files, 
+please specify a master username and password for authentication.
+</p>
+
+<div id="errors" style="display: none" class="error">
+<h3>Error</h3>
+<p>Please perform the following actions and re-submit</p>
+<ul id="error_list">
+</ul>
+</div>
+<?php endif; ?>
+
+<form action="index.php" method="POST" onSubmit="return checkForm(this)">
+<input type="hidden" name="step" value="5">
+<table>
+	<tr>
+		<td><label for="username">Username</label></td>
+		<td><input type="text" name="username" value="admin"></td>
+	</tr>
+	<tr>
+		<td><label for="password">Password</label></td>
+		<td><input type="password" name="password" value="<?php echo $var['password'] ?>" id="passfield"></td>
+	</tr>
+
+	<tr>
+		<td><label for="confirm_password">Confirm Password</label></td>
+		<td><input type="password" name="confirm_password" value="<?php echo $var['confirm_password'] ?>" id="passfield"></td>
+	</tr>
+	<tr>
+		<td colspan="2"><input type="submit" name="submit" value="Edit httpd.conf, then Continue &gt;&gt;"></td>
+	</tr>
+</table>
+</form>
+
+<script>
+document.getElementById('passfield').focus();
+</script>

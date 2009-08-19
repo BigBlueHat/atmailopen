@@ -1,0 +1,48 @@
+<h2>Step 1: Select Language and License Agreement</h2>
+
+<p>The language selected here will become the default language for the WebMail interface.
+The installer is currently in English only.</p>
+
+<?php if($var['invalid_lang']): ?>
+<div class="error">
+	<h3>Error</h3>
+	<p>The language submitted is invalid, please choose from the list</p>
+</div>
+<?php endif; ?>
+
+<script type="text/javascript">
+
+
+
+</script>
+
+<form action="index.php" method="POST" onSubmit=" return checkAgreement(this)" >
+	<input type="hidden" name="step" value="1">
+Default language for Webmail interface:
+	<select name="atmail_lang">
+		<?php foreach ($var['supportedLanguages'] as $language):
+		$name = ucfirst($language);
+
+                if($language == "english")
+                $selected = 'selected';
+                else
+                $selected = '';
+
+		echo "<option value=\"$language\" $selected>$name</option>\n";
+		endforeach; ?>
+	</select>
+	<br>
+	<br>
+	<textarea rows="15" cols="80">
+	<?php if($pref['opensource']): readfile('licenses/Apache.txt');?>
+	<?php else:  readfile('licenses/commercial.txt');?>
+	<?php endif; ?>
+	</textarea>
+
+    <br>
+    Yes I agree to the above license <input type="checkbox" name="i_agree">
+    <br>
+    <br>
+    <input type="submit" name="submit" value="Continue &gt;&gt;">
+
+</form>

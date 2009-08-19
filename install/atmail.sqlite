@@ -1,0 +1,653 @@
+
+CREATE TABLE AbookPermissions (
+  AbookID mediumint(8)  default NULL,
+  Account varchar(96) NOT NULL default '',
+  Permissions smallint(1) default NULL,
+  id INTEGER PRIMARY KEY,
+  Type varchar(6) default NULL,
+  Domain varchar(64) default NULL
+);
+
+CREATE TABLE AbookGroup (
+  GroupName varchar(32) default NULL,
+  GroupEmail varchar(64) default NULL,
+  Account varchar(128) default NULL,
+  id INTEGER PRIMARY KEY
+);
+
+CREATE TABLE Abook (
+  UserEmail varchar(255) default NULL,
+  UserEmail2 varchar(255) default NULL,
+  UserEmail3 varchar(255) default NULL,
+  UserEmail4 varchar(255) default NULL,
+  UserEmail5 varchar(255) default NULL,
+  UserFirstName varchar(128) default NULL,
+  UserMiddleName varchar(128) default NULL,
+  UserLastName varchar(128) default NULL,
+  UserTitle varchar(128) default NULL,
+  UserGender char(1) default NULL,
+  UserDOB datetime default NULL,
+  UserHomeAddress varchar(128) default NULL,
+  UserHomeCity varchar(128) default NULL,
+  UserHomeState varchar(128) default NULL,
+  UserHomeZip varchar(128) default NULL,
+  UserHomeCountry varchar(128) default NULL,
+  UserHomePhone varchar(128) default NULL,
+  UserHomeMobile varchar(128) default NULL,
+  UserHomeFax varchar(128) default NULL,
+  UserURL varchar(128) default NULL,
+  UserWorkCompany varchar(128) default NULL,
+  UserWorkTitle varchar(128) default NULL,
+  UserWorkDept varchar(128) default NULL,
+  UserWorkOffice varchar(128) default NULL,
+  UserWorkAddress varchar(128) default NULL,
+  UserWorkCity varchar(128) default NULL,
+  UserWorkState varchar(128) default NULL,
+  UserWorkZip varchar(128) default NULL,
+  UserWorkCountry varchar(128) default NULL,
+  UserWorkPhone varchar(128) default NULL,
+  UserWorkMobile varchar(128) default NULL,
+  UserWorkFax varchar(128) default NULL,
+  UserType varchar(16) default NULL,
+  UserInfo text,
+  UserPgpKey text,
+  Account varchar(64) NOT NULL default '',
+  id INTEGER PRIMARY KEY,
+  DateAdded datetime default NULL,
+  DateModified varchar(12) default NULL,
+  EntryID varchar(64) default NULL
+);
+
+
+CREATE TABLE Accounts (
+  UserAccount varchar(32) default NULL,
+  Account varchar(64) NOT NULL default '',
+  Type varchar(4) default NULL,
+  MailServer varchar(64) default NULL
+);
+
+
+CREATE TABLE AdminGroup (
+  Username varchar(64) NOT NULL default '',
+  Ugroup varchar(32) default NULL,
+  Domain varchar(64) default NULL,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE AdminUsers (
+  Username varchar(64) NOT NULL default '',
+  Password varchar(64) NOT NULL default '',
+  UAdd tinyint(1) default NULL,
+  UDelete tinyint(1) default NULL,
+  UModify tinyint(1) default NULL,
+  UPurge tinyint(1) default NULL,
+  USearch tinyint(1) default NULL,
+  UList tinyint(1) default NULL,
+  UMigrate tinyint(1) default NULL,
+  ULogs tinyint(1) default NULL,
+  UAlias tinyint(1) default NULL,
+  id INTEGER PRIMARY KEY,
+  NumUsers mediumint(6) default NULL,
+  Company varchar(64) default NULL,
+  Fullname varchar(64) default NULL,
+  DateCreate datetime default NULL,
+  SessionID varchar(32) default NULL,
+  LastLogin int(10)  default NULL,
+  NumQuota mediumint(6)  default NULL,
+  UBrand tinyint(1) default NULL,
+  BrandDomain varchar(128) default NULL,
+  UGroupAssign tinyint(1) default NULL,
+  UAll tinyint(1) default NULL
+);
+
+
+CREATE TABLE Calander (
+  Importance smallint(1) default NULL,
+  UserTo varchar(64) default NULL,
+  UserFrom varchar(64) default NULL,
+  Title varchar(255) default NULL,
+  DatePost datetime default NULL,
+  CalMessage text,
+  Alert smallint(3) default NULL,
+  DateStart datetime NOT NULL default '0000-00-00 00:00:00',
+  DateEnd datetime default NULL,
+  id INTEGER PRIMARY KEY,
+  Type varchar(16) default NULL,
+  Task smallint(1) default NULL,
+  Ref smallint(6) default NULL,
+  Parent tinyint(1) default NULL,
+  Permission tinyint(1) default NULL,
+  EntryID varchar(64) default NULL,
+  DateModified varchar(12) default NULL,
+  Location varchar(64) default NULL,
+  AllDayEvent smallint(1) default NULL,
+  DateAlert datetime default NULL,
+  IsRecurring int(11) default NULL,
+  IsException int(11) default NULL
+);
+
+
+CREATE TABLE CalendarPermissions (
+  CalID mediumint(8)  default NULL,
+  Account varchar(128) NOT NULL default '',
+  Permissions smallint(1) default NULL,
+  Type varchar(6) default NULL,
+  id INTEGER PRIMARY KEY,
+  Domain varchar(64) default NULL
+);
+
+
+CREATE TABLE ClientBilling (
+  Account varchar(64) NOT NULL default '',
+  CardNumber varchar(64) default NULL,
+  CardName varchar(64) default NULL,
+  CardExpMonth varchar(4) default NULL,
+  CardExpYear varchar(4) default NULL,
+  PaymentStatus tinyint(4) default NULL,
+  DateSignup datetime default NULL,
+  DatePaid datetime default NULL,
+  Amount mediumint(8)  default NULL,
+  id INTEGER PRIMARY KEY,
+  Service varchar(32) default NULL
+);
+
+
+CREATE TABLE ClientPayment (
+  Account varchar(64) NOT NULL default '',
+  Amount mediumint(8)  default NULL,
+  PaymentStatus tinyint(4) default NULL,
+  DatePaid datetime default NULL,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE Domains (
+  Hostname varchar(255) PRIMARY KEY,
+  Enable char(1) default NULL
+);
+
+
+CREATE TABLE EmailDatabase (
+  EmailSubject varchar(164) default NULL,
+  EmailFrom varchar(164) default NULL,
+  EmailTo varchar(64) default NULL,
+  EmailModified timestamp NOT NULL default CURRENT_TIMESTAMP,
+  EmailDate timestamp NOT NULL default '0000-00-00 00:00:00',
+  EmailBox varchar(64) default NULL,
+  EmailFlag char(1) default NULL,
+  EmailAttach char(1) default NULL,
+  id INTEGER PRIMARY KEY,
+  Account varchar(128) NOT NULL default '',
+  EmailUIDL varchar(70) default NULL,
+  EmailSize int(10)  default NULL,
+  FlagSeen tinyint(1) NOT NULL default '0',
+  FlagAnswered tinyint(1) NOT NULL default '0',
+  FlagDeleted tinyint(1) NOT NULL default '0',
+  FlagFlagged tinyint(1) NOT NULL default '0',
+  FlagRecent tinyint(1) NOT NULL default '0',
+  FlagDraft tinyint(1) NOT NULL default '0',
+  FlagInferiors tinyint(1) NOT NULL default '0',
+  FlagSelect tinyint(1) NOT NULL default '0'
+);
+
+
+CREATE TABLE EmailMessage_Reply (
+  EmailMessage longtext,
+  id mediumint(8)  NOT NULL default '0' PRIMARY KEY
+);
+
+
+CREATE TABLE EmailMessage (
+  EmailMessage longtext,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE EmailUIDL (
+  EmailUIDL varchar(70) NOT NULL default '',
+  EmailType char(1) default NULL,
+  Account varchar(128) NOT NULL default ''
+);
+
+
+CREATE TABLE Filter (
+  Header varchar(32) NOT NULL default '',
+  Value varchar(255) default NULL,
+  Score int(2) default NULL,
+  Account varchar(64) NOT NULL default '',
+  Type int(1) default NULL,
+  id INTEGER PRIMARY KEY,
+  Origin varchar(8) default NULL,
+  Description varchar(255) default NULL
+);
+
+
+CREATE TABLE Folders (
+  id INTEGER PRIMARY KEY,
+  Account varchar(128) NOT NULL default '',
+  FolderName varchar(64) NOT NULL default '',
+  FolderSize smallint(6)  default NULL,
+  FolderMsgs smallint(5)  default NULL,
+  FlagSeen tinyint(1) NOT NULL default '0',
+  FlagAnswered tinyint(1) NOT NULL default '0',
+  FlagDeleted tinyint(1) NOT NULL default '0',
+  FlagFlagged tinyint(1) NOT NULL default '0',
+  FlagRecent tinyint(1) NOT NULL default '0',
+  FlagDraft tinyint(1) NOT NULL default '0',
+  FlagInferiors tinyint(1) NOT NULL default '0',
+  FlagSelect tinyint(1) NOT NULL default '0',
+  Permission tinyint(1) default '1',
+  Subscribe tinyint(1) NOT NULL default '0',
+  ParentID bigint(12)  default NULL,
+  IMAP tinyint(1) NOT NULL default '0'
+);
+
+
+CREATE TABLE Groups (
+  GroupName varchar(64) NOT NULL default '' PRIMARY KEY,
+  GroupDescription varchar(64) default NULL,
+  GroupPrice varchar(5) default NULL,
+  GroupQuota mediumint(8)  default NULL,
+  MailForwarding int(1) default NULL,
+  SMSSupport int(1) default NULL,
+  POP3Support int(1) default NULL,
+  IMAPSupport int(1) default NULL,
+  MultiSupport int(1) default NULL,
+  PersonalSpam int(1) default NULL,
+  GlobalAbookRead int(1) default NULL,
+  GlobalAbook int(1) default NULL,
+  AV int(1) default NULL,
+  SpamSupport int(1) default NULL,
+  Sync int(1) default NULL
+);
+
+
+CREATE TABLE Log_Error (
+  LogMsg varchar(255) default NULL,
+  LogDate datetime default NULL,
+  Account varchar(128) NOT NULL default '',
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE Log_Login (
+  LogMsg varchar(64) default NULL,
+  LogDate datetime default NULL,
+  Account varchar(128) default NULL,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE Log_RecvMail (
+  LogMsg varchar(64) default NULL,
+  LogDate datetime default NULL,
+  Account varchar(128) NOT NULL default '',
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE Log_SMS (
+  LogMsg varchar(255) default NULL,
+  LogDate datetime default NULL,
+  Account varchar(128) NOT NULL default '',
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE Log_SendMail (
+  LogMsg varchar(64) default NULL,
+  LogDate datetime default NULL,
+  Account varchar(128) NOT NULL default '',
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE Log_Spam (
+  LogMsg varchar(255) default NULL,
+  LogDate datetime default NULL,
+  Account varchar(64) NOT NULL default '',
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE Log_Virus (
+  LogMsg varchar(255) default NULL,
+  LogDate datetime default NULL,
+  Account varchar(64) NOT NULL default '',
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE MailAliases (
+  AliasName varchar(200) default NULL,
+  AliasTo varchar(200) default NULL,
+  Domain varchar(128) default NULL,
+  DateCreate datetime default NULL,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE MailRelay (
+  IPaddress varchar(15) NOT NULL default '' PRIMARY KEY,
+  DateAdded timestamp NOT NULL default CURRENT_TIMESTAMP,
+  Account varchar(64) default NULL
+);
+
+
+CREATE TABLE MailSort (
+  EmailAddress varchar(64) default NULL,
+  EmailSubject varchar(64) default NULL,
+  EmailFolder varchar(32) default NULL,
+  Account varchar(128) default NULL
+);
+
+
+CREATE TABLE SMSCredits (
+  Account varchar(128) default NULL,
+  Credit float  default NULL,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE SMSfilter (
+  Account varchar(128) NOT NULL default '',
+  EmailSubject varchar(128) default NULL,
+  EmailSubjectType char(2) default NULL,
+  EmailFrom varchar(128) default NULL,
+  EmailFromType char(2) default NULL,
+  EmailPriority char(1) default NULL,
+  EmailAll char(1) default NULL,
+  MobileNumber varchar(16) default NULL,
+  Matches mediumint(8)  default NULL,
+  DateCreated datetime default NULL,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE SMSqueue (
+  AlertNumber varchar(128) default NULL,
+  AlertModified timestamp NOT NULL default CURRENT_TIMESTAMP,
+  AlertDate varchar(11) default NULL,
+  AlertMessage varchar(255) default NULL,
+  AlertStatus char(1) default NULL,
+  Account varchar(128) default NULL,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE SMSsent (
+  Account varchar(128) NOT NULL default '',
+  SMSFrom varchar(128) default NULL,
+  SMSTo varchar(128) default NULL,
+  SMSStatus varchar(8) default NULL,
+  SMSmessage varchar(255) default NULL,
+  id INTEGER PRIMARY KEY,
+  SMSid varchar(64) default NULL,
+  SMSdate datetime default NULL
+);
+
+
+CREATE TABLE SharedLookup (
+  Type varchar(8) default NULL,
+  EntryID varchar(64) default NULL,
+  LookupID bigint(10)  NOT NULL default '0',
+  id INTEGER PRIMARY KEY,
+  Account varchar(64) default NULL,
+  DateModified varchar(12) default NULL
+);
+
+
+CREATE TABLE SpamDB (
+  SpamEmail varchar(64) NOT NULL default '',
+  Account varchar(128) default NULL
+);
+
+
+CREATE TABLE SpamSettings (
+  username varchar(255) default NULL,
+  preference varchar(30) NOT NULL default '',
+  value varchar(100) NOT NULL default '',
+  prefid INTEGER PRIMARY KEY,
+  domain varchar(128) default NULL
+);
+
+
+CREATE TABLE SpellCheck (
+  Account varchar(64) NOT NULL default '',
+  Word varchar(40) default NULL,
+  SUnique varchar(10) default '0',
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE UserPermissions (
+  Account varchar(128) default NULL,
+  DateAdded timestamp NOT NULL default CURRENT_TIMESTAMP,
+  id INTEGER PRIMARY KEY
+);
+
+
+CREATE TABLE UserPgp (
+  Account varchar(64) NOT NULL default '' PRIMARY KEY,
+  pubring mediumblob,
+  secring mediumblob,
+  trustdb mediumblob,
+  public blob
+);
+
+
+CREATE TABLE UserSession (
+  Account varchar(128) NOT NULL default '' PRIMARY KEY,
+  Password varchar(64) default NULL,
+  SessionID varchar(32) NOT NULL default '',
+  LastLogin int(10)  default NULL,
+  PasswordMD5 varchar(64) default NULL,
+  SessionData text,
+  ChangePass int(1) default NULL
+);
+
+
+CREATE TABLE UserSettings (
+  Account varchar(64) NOT NULL default '' PRIMARY KEY,
+  MboxOrder varchar(12) default NULL,
+  RealName varchar(40) default NULL,
+  Refresh smallint(5) default NULL,
+  EmailHeaders varchar(8) default NULL,
+  TimeZone varchar(32) default NULL,
+  MsgNum varchar(4) default NULL,
+  EmptyTrash smallint(1) default NULL,
+  NewWindow smallint(1) default NULL,
+  HtmlEditor smallint(1) default NULL,
+  ReplyTo varchar(255) default NULL,
+  Signature text,
+  FontStyle varchar(21) default NULL,
+  LeaveMsgs smallint(1) default NULL,
+  LoginType varchar(12) default NULL,
+  Advanced smallint(1) default NULL,
+  PrimaryColor varchar(7) default NULL,
+  SecondaryColor varchar(7) default NULL,
+  LinkColor varchar(7) default NULL,
+  VlinkColor varchar(7) default NULL,
+  BgColor varchar(7) default NULL,
+  TextColor varchar(7) default NULL,
+  HeaderColor varchar(7) default NULL,
+  HeadColor varchar(7) default NULL,
+  MailType varchar(4) default NULL,
+  ThirdColor varchar(7) default NULL,
+  Mode varchar(4) default NULL,
+  Service smallint(1) default NULL,
+  Language varchar(10) default NULL,
+  StartPage char(1) default NULL,
+  OnColor varchar(7) default NULL,
+  OffColor varchar(7) default NULL,
+  TextHeadColor varchar(7) default NULL,
+  SelectColor varchar(7) default NULL,
+  TopBg varchar(24) default NULL,
+  AutoTrash tinyint(1) default NULL,
+  MailServer varchar(64) default NULL,
+  MailAuth tinyint(1) default NULL,
+  PGPenable smallint(1) default NULL,
+  PGPappend smallint(1) default NULL,
+  PGPsign smallint(1) default NULL,
+  SpamTreatment varchar(10) default NULL,
+  AbookTrusted smallint(1) default NULL,
+  AntiVirus smallint(1) default NULL,
+  PassCode varchar(64) default NULL,
+  DateFormat varchar(8) default NULL,
+  TimeFormat varchar(8) default NULL,
+  AutoComplete smallint(1) default NULL,
+  EmailEncoding varchar(16) default NULL,
+  DisplayImages smallint(1) default NULL,
+  Ajax char(1) default NULL
+);
+
+
+CREATE TABLE Users (
+  Account varchar(128) NOT NULL default '',
+  PasswordQuestion varchar(64) default NULL,
+  OtherEmail varchar(128) default NULL,
+  FirstName varchar(96) default NULL,
+  LastName varchar(96) default NULL,
+  BirthDay smallint(2) default NULL,
+  BirthMonth smallint(2) default NULL,
+  BirthYear smallint(4) default NULL,
+  Gender char(1) default NULL,
+  Industry varchar(42) default NULL,
+  Occupation varchar(40) default NULL,
+  Address varchar(96) default NULL,
+  City varchar(96) default NULL,
+  PostCode varchar(36) default NULL,
+  State varchar(24) default NULL,
+  Country varchar(32) default NULL,
+  DateModified timestamp NOT NULL default '0000-00-00 00:00:00',
+  DateCreate timestamp NOT NULL default '0000-00-00 00:00:00',
+  id INTEGER PRIMARY KEY,
+  TelHome varchar(16) default NULL,
+  FaxHome varchar(16) default NULL,
+  TelWork varchar(16) default NULL,
+  FaxWork varchar(16) default NULL,
+  TelMobile varchar(16) default NULL,
+  TelPager varchar(16) default NULL,
+  Ugroup varchar(16) default NULL,
+  UserStatus int(1) default NULL,
+  MailDir varchar(255) default NULL,
+  Forward varchar(128) default NULL,
+  AutoReply text,
+  UserQuota mediumint(8)  default NULL
+);
+
+
+CREATE TABLE awl (
+  username varchar(100) NOT NULL default '',
+  email varchar(200) NOT NULL default '',
+  ip varchar(10) NOT NULL default '',
+  count int(11) default '0',
+  totscore float default '0',
+  IndexDate timestamp NOT NULL default CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE recurrencePatterns (
+  id INTEGER PRIMARY KEY,
+  account varchar(128) default NULL,
+  RecurrenceType int(11) default NULL,
+  PatternStartDate datetime default NULL,
+  PatternEndDate datetime default NULL,
+  NoEndDate int(11) default NULL,
+  Occurences int(11) default NULL,
+  skipInterval int(11) default NULL,
+  DayOfWeekMask int(11) default NULL,
+  DayOfMonth int(11) default NULL,
+  Instance int(11) default NULL,
+  Duration int(11) default NULL,
+  MonthOfYear int(11) default NULL,
+  linkid int(11) default NULL,
+  IsSimple int(11) default NULL
+);
+
+CREATE TABLE Calander_shared (
+  Importance smallint(1) default NULL,
+  UserTo varchar(128) NOT NULL default '',
+  UserFrom varchar(128) default NULL,
+  Title varchar(255) default NULL,
+  DatePost datetime default NULL,
+  CalMessage text,
+  Alert smallint(3) default NULL,
+  DateStart datetime NOT NULL default '0000-00-00 00:00:00',
+  DateEnd datetime default NULL,
+  id INTEGER PRIMARY KEY,
+  Type varchar(8) default NULL,
+  Task smallint(1) default NULL,
+  Ref smallint(6) default NULL,
+  Parent tinyint(1) default NULL,
+  Permission tinyint(1) default NULL,
+  EntryID varchar(64) default NULL,
+  DateModified varchar(12) default NULL,
+  Location varchar(64) default NULL,
+  AllDayEvent smallint(1) default NULL,
+  DateAlert datetime default NULL,
+  IsRecurring int(11) default NULL,
+  IsException int(11) default NULL
+);
+
+CREATE TABLE Abook_shared (
+  UserEmail varchar(255) default NULL,
+  UserEmail2 varchar(255) default NULL,
+  UserEmail3 varchar(255) default NULL,
+  UserEmail4 varchar(255) default NULL,
+  UserEmail5 varchar(255) default NULL,
+  UserFirstName varchar(128) default NULL,
+  UserMiddleName varchar(128) default NULL,
+  UserLastName varchar(128) default NULL,
+  UserTitle varchar(128) default NULL,
+  UserGender char(1) default NULL,
+  UserDOB datetime default NULL,
+  UserHomeAddress varchar(128) default NULL,
+  UserHomeCity varchar(128) default NULL,
+  UserHomeState varchar(128) default NULL,
+  UserHomeZip varchar(128) default NULL,
+  UserHomeCountry varchar(128) default NULL,
+  UserHomePhone varchar(128) default NULL,
+  UserHomeMobile varchar(128) default NULL,
+  UserHomeFax varchar(128) default NULL,
+  UserURL varchar(128) default NULL,
+  UserWorkCompany varchar(128) default NULL,
+  UserWorkTitle varchar(128) default NULL,
+  UserWorkDept varchar(128) default NULL,
+  UserWorkOffice varchar(128) default NULL,
+  UserWorkAddress varchar(128) default NULL,
+  UserWorkCity varchar(128) default NULL,
+  UserWorkState varchar(128) default NULL,
+  UserWorkZip varchar(128) default NULL,
+  UserWorkCountry varchar(128) default NULL,
+  UserWorkPhone varchar(128) default NULL,
+  UserWorkMobile varchar(128) default NULL,
+  UserWorkFax varchar(128) default NULL,
+  UserType varchar(16) default NULL,
+  UserInfo text,
+  UserPgpKey text,
+  Account varchar(64) NOT NULL default '',
+  id INTEGER PRIMARY KEY,
+  DateAdded datetime default NULL,
+  DateModified varchar(12) default NULL,
+  EntryID varchar(64) default NULL
+);
+
+
+CREATE TRIGGER caldatestart AFTER INSERT ON Calander
+BEGIN
+UPDATE Calander SET DatePost = datetime('now', 'localtime') WHERE id = new.id;
+END;
+
+CREATE TRIGGER sharedcaldatepost AFTER INSERT ON Calander_shared
+BEGIN
+UPDATE Calander_shared SET DatePost = datetime('now', 'localtime') WHERE id = new.id;
+END;
+
+CREATE TRIGGER userupdate AFTER UPDATE ON Users
+BEGIN
+UPDATE Users SET DateModified = datetime('now', 'localtime') WHERE Account = old.Account;
+END;
+
+INSERT INTO Groups (GroupName) VALUES ('Default');

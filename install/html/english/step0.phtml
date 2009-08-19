@@ -1,0 +1,250 @@
+<p>Thank you for choosing Atmail Open, this easy to use Web-installer will guide you through configuring the software. The installation progress is displayed with a progress bar at the
+top right of the page. Completed steps appear black and the current step blue. You can return
+to any completed step by clicking on its box in the progress bar.</p>
+
+<p>For assistance during installation please consult the following guides:</P>
+<ul>
+<li class='dl'><a href="http://atmail.com/docs/php/webmail-install.html" target="_blank">Installation Documentation</a> - Guide for installing the Webmail client of Atmail
+</li>
+<li class='dl'> <a href="http://kb.atmail.com/" target="_blank">Knowledge Base</a> - Hints and tips for installing and maintaining Atmail.
+</li>
+</ul>
+
+
+<?php if($var['invalid_lang']): ?>
+<div class="error">
+	<h3>Error</h3>
+	<p>The language submitted is invalid, please choose from the list</p>
+</div>
+<?php endif; ?>
+
+<form action="index.php" method="POST" onSubmit=" return checkAgreement(this)" >
+	<input type="hidden" name="step" value="1">
+
+	<h2>Required PHP Extensions</h2>
+	<p>Atmail requires the following PHP extensions to function. Please
+	install them and continue Atmail installation.</p>
+
+	<?php if($var['error'] == '1' && in_array('enable_dl', $var['ini']) && $var['version'] == 'demo' && in_array('ioncube', $var['req'])): ?>
+	<div class="error">
+		<h3>Dependency Check failed</h3>
+				<p>IonCube Loader not detected &amp; no dynamic load support. This extension is required to run the compiled demo of Atmail. The full version includes the complete source-code and this step is not required. To proceed with the installation of Atmail you must enable dynamic_load support or load the Ioncube extension for your platform.
+<br/><br/>
+<b>Option 1</b>: Load Ioncube extension (better performance) - Edit <?php echo $var['php_ini_path'] ?> and add the lines :<br />
+        <br />
+        zend_extension= <?php echo $var['ioncube_lib'] ?></p>
+<p><b>Option 2:</b> Enable dynamic_load support - Edit <?php echo $var['php_ini_path'] ?> and define:<br/><br/>
+
+	enable_dl = On
+	</p>
+
+		<p>To proceed with the installation of Atmail you must choose a method above, restart Apache, then reload the page to proceed. Review the <a href="http://atmail.com/docs/php/webmail-install.html" target="_blank">installation manual</a> for further details.</p>
+	</div>
+	<?php endif; ?>
+
+	<?php if($var['error'] == '1' && in_array('safe_mode', $var['req'])): ?>
+	<div class="error" id="safemode">
+		<h3>Dependency Check failed</h3>
+				<p>To correctly operate, Atmail requires PHP safe mode to be turned off. To proceed with the installation choose one of the following:
+<br/><br/>
+<b>Option 1</b>: Disable PHP safe-mode site wide - Edit <?php echo $var['php_ini_path'] ?> and redefine the safe_mode setting to:<br />
+        <br />
+        safe_mode = Off</p>
+<p><b>Option 2:</b> Disable Safe-mode for the selected Virtual-host - Edit the Webserver configuration file and disable Safe-mode for the running Virtual-host:<br/>
+
+<p>&lt;VirtualHost .....&gt;<br/>
+	...<br/>
+	php_admin_flag safe_mode off<br/>
+	...<br/>
+&lt;/VirtualHost&gt;
+	</p>
+
+		<p>To proceed with the installation of Atmail you must choose a method above, restart Apache, then reload the page to proceed. Review the <a href="http://atmail.com/docs/php/webmail-install.html" target="_blank">installation manual</a> for further details.</p>
+	</div>
+	<?php endif; ?>
+
+	<?php if($var['error'] == '1' && !in_array('ioncube', $var['req']) && !in_array('safe_mode', $var['req'])): ?>
+	<div class="error">
+		<h3>Dependency Check failed</h3>
+		<p>To proceed with the installation of Atmail you must install the missing extensions below, then reload the page to proceed. Review the <a href="http://atmail.com/docs/php/webmail-install.html" target="_blank">installation manual</a> for further details.</p>
+	</div>
+	<?php endif; ?>
+
+	<ul class="precheck">
+
+	<?php if(in_array('session', $var['req'])): ?>
+	<li class='required'>Session Handling Functions - <a href="info.php#module_session" target="_blank">View php info()</a> | <a
+	href="http://php.net/manual/en/ref.session.php" target="_blank">Session Info</a>
+	</li>
+
+	<?php else: ?>
+	<li class='installed'>Installed - Session Handling Functions</a>
+	</li>
+	<?php endif; ?>
+
+
+	<?php if(in_array('pcre', $var['req'])): ?>
+	<li class='required'>Required - Regular Expression Functions (PCRE) - <a href="info.php" target="_blank">View php info()</a> | <a href="http://php.net/manual/en/ref.pcre.php" target="_blank">PCRE Info</a>
+	</li>
+
+	<?php else: ?>
+	<li class='installed'>Installed - Regular Expression Functions (PCRE)</a>
+	</li>
+	<?php endif; ?>
+
+	<?php if(in_array('mysql', $var['opt']) && in_array('sqlite', $var['opt'])): ?>
+	<li class='required'>MySQL Extension or SQLite Extension- <a href="info.php" target="_blank">View php info()</a> | <a href="http://php.net/manual/en/ref.mysql.php" target="_blank">Mysql Info</a> | <a href="http://php.net/manual/en/ref.sqlite.php" target="_blank">SQLite Info</a>
+	</li>
+	<?php endif; ?>
+	
+	<?php if(!in_array('mysql', $var['opt'])): ?>
+	<li class='installed'>Installed - MySQL Extension</a>
+	</li>
+	<?php endif; ?>
+	
+	<?php if(!in_array('sqlite', $var['opt'])): ?>
+	<li class='installed'>Installed - SQLite Extension</a>
+	</li>
+	<?php endif; ?>
+	
+	<?php if(in_array('ioncube', $var['req']) && $var['version'] == 'demo'): ?>
+	<li class='required'>Required - ionCube Loader - <a href="info.php" target="_blank">View php info()</a>
+	</li>
+	<?php endif; ?>
+
+	<?php if($var['ionext'] == '1'): ?>
+	<li class='installed'>Installed - ionCube Extension Loader</a>
+	</li>
+	<?php endif; ?>
+
+	<?php if(!in_array('ioncube', $var['req']) && $var['version'] == 'demo' && !in_array('enable_dl', $var['ini']) ): ?>
+	<li class='installed'>Installed - ionCube Dynamic Loader</a>
+	</li>
+	<?php endif; ?>
+
+	<?php if (in_array('safe_mode', $var['req'])): ?>
+	<li class='required'>Safe mode on - Atmail requires safe-mode turned off to function <a href="info.php" target="_blank">View php info()</a>
+	</li>
+	<?php endif; ?>
+
+	</ul>
+
+	<h2>Optional PHP extensions</h2>
+
+	<p>These are optional modules Atmail can utilize for the Webmail interface. If any are not installed Atmail can continue to run with the feature disabled.
+
+	<ul>
+
+	<?php if (in_array('mbstring', $var['opt'])): ?>
+	<li class='optional'>Mbstring Extension - Enables UTF8 folder names for Atmail - <a href="info.php#module_ldap" target="_blank">View php info()</a>
+	| <a href="http://php.net/mbstring" target="_blank">Mbstring Info</a>
+	</li>
+
+	<?php else: ?>
+	<li class='installed'>Installed - Mbstring Extension, enables UTF8 folder names for Atmail
+	</li>
+	<?php endif; ?>
+		
+	<?php if (in_array('openssl', $var['opt'])): ?>
+	<li class='optional'>OpenSSL Extension - Enables Secure IMAP and POP3 connections - <a href="info.php#module_openssl" target="_blank">View php info()</a>
+	| <a href="http://php.net/openssl" target="_blank">OpenSSL Info</a>
+	</li>
+
+	<?php else: ?>
+	<li class='installed'>Installed - OpenSSL Extension, enables Secure IMAP and POP3 connections
+	</li>
+	<?php endif; ?>
+	
+	<?php if (in_array('ldap', $var['opt'])): ?>
+	<li class='optional'>LDAP Extension - Will enable Atmail to search LDAP servers - <a href="info.php#module_ldap" target="_blank">View php info()</a>
+	| <a href="http://php.net/manual/en/ref.ldap.php" target="_blank">LDAP Info</a>
+	</li>
+
+	<?php else: ?>
+	<li class='installed'>Installed - LDAP Extension, enables Atmail to search LDAP servers
+	</li>
+	<?php endif; ?>
+
+	<?php if (in_array('iconv', $var['opt'])): ?>
+	<li class='optional'>Iconv Extension - Provides encoding conversion between different character sets - <a href="info.php#module_iconv" target="_blank">View php info()</a> | <a href="http://php.net/iconv" target="_blank">Iconv Info</a>
+	</li>
+
+	<?php else: ?>
+	<li class='installed'>Installed - Iconv Extension - Provides encoding conversion between different character sets
+	</li>
+	<?php endif; ?>
+
+
+	</ul>
+
+
+	<h2>PHP.ini Settings</h2>
+
+	<p>The default configuration file php.ini is recommended to be set with the values below for Atmail. If settings are not as recommended you may need to
+	change the php.ini with the values suggested below for Atmail to function correctly</p>
+
+	<ul>
+
+	<?php if ($var['subadmin'] == 1): ?>
+	<?php if (in_array('session.save_path', $var['req'])): ?>
+	<li class='required'>Subadmin: session.save_path (<?php echo $var['session_save_path'] ?>) must be writable by the webserver. Make sure you fix permissions for <?php echo $var['session_save_path'] ?> before you use Subadmin</li>
+	<?php else: ?>
+		<li class='installed'>session.save_path (<?php echo $var['session_save_path'] ?>) is writable by the webserver (required by Subadmin).</li>
+	<?php endif; ?>
+	<?php endif; ?>
+	
+	<?php if (!in_array('safe_mode', $var['req'])): ?>
+	<li class='installed'>Safe mode, recommended OFF - Atmail requires safe-mode off by default</li>
+	<?php endif; ?>
+
+	<?php if (!in_array('register_globals', $var['ini'])): ?>
+	<li class='optional'>Register globals, recommended <b>OFF</b>, current value ON  - This feature is recommended to be turned off for security <a href="info.php" target="_blank">View php info()</a></li>
+
+	<?php else: ?>
+	<li class='installed'>Register globals, recommended OFF - This feature is recommended to be turned off for security</li>
+	<?php endif; ?>
+
+	<?php if (!in_array('magic_quotes_gpc', $var['ini'])): ?>
+	<li class='required'>Magic quotes, required <b>OFF</b>, current value ON  - The magic_quotes_gpc setting must be turned off in the php.ini . Atmail automatically quotes data and this setting is not required <a href="info.php" target="_blank">View php info()</a></li>
+	
+	<?php else: ?>
+	<li class='installed'>Magic quotes, recommended OFF - The magic_quotes_gpc setting must be turned off in the php.ini </li>
+	<?php endif; ?>
+
+	<?php if (in_array('file_uploads', $var['ini'])): ?>
+	<li class='optional'>File uploads, recommended <b>ON</b>, current value OFF - Required for attaching files to emails <a href="info.php" target="_blank">View php info()</a></li>
+
+	<?php else: ?>
+	<li class='installed'>File uploads, recommended ON - Required for attaching files to emails</li>
+	<?php endif; ?>
+
+	<?php if (in_array('upload_max_filesize', $var['ini'])): ?>
+	<li class='optional'>Max Filesize Upload, recommended 16M or higher. Current value <? echo $var['upload_max_filesize'] ?>. Increase for larger attachment support <a href="info.php" target="_blank">View php info()</a></li>
+	<?php else: ?>
+	<li class='installed'>Max Filesize Upload, recommended 16M or higher - Recommended max fileupload size for attachments</li>
+	<?php endif; ?>
+
+	<?php if(in_array('post_max_size', $var['ini'])): ?>
+	<li class='optional'>Maximum Size of POST data, recommended 16M or higher. Current value <? echo $var['post_max_size'] ?>. Increase for larger attachment support <a href="info.php" target="_blank">View php info()</a></li>
+	<?php else: ?>
+	<li class='installed'>Maximum Size of POST data, recommended 16M or higher - Recommended max post size for attachments</li>
+	<?php endif; ?>
+
+    <?php if (in_array('enable_dl', $var['ini']) && preg_match('/demo/i', $pref['version'])): ?>
+	<li class='optional'>enable_dl - Loads a PHP extension at runtime, recommended <b>ON</b>, current value OFF - Required for ionCube Run-Time load <a href="info.php" target="_blank">View php info()</a></li>
+	<?php elseif (preg_match('/demo/i', $pref['version'])): ?>
+	<li class='installed'>enable_dl - Loads a PHP extension at runtime, recommended ON - Required for ionCube Run-Time load</li>
+	<?php endif; ?>
+    </ul>
+
+    <br />
+
+<?php if($var['error'] == '1' && !in_array('ioncube', $var['req'])): ?>
+    <input type="submit" name="submit" value="Resolve Dependency to continue &gt;&gt;" disabled style="cursor:not-allowed">
+<?php endif; ?>
+
+<?php if($var['error'] != '1' || ($var['version'] == 'demo' && !in_array('enable_dl', $var['ini']))): ?>
+    <input type="submit" name="submit" value="Continue &gt;&gt;">
+<?php endif; ?>
+
+</form>

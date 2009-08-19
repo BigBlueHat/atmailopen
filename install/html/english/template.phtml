@@ -1,0 +1,122 @@
+<html>
+<head>
+
+<link rel="stylesheet" type="text/css" href="css/style.css">
+<script type="text/javascript" src="../javascript/prototype.js"></script>
+
+<script type="text/javascript">
+
+function updateProgressBar(step)
+{
+	var element = document.getElementById('step'+step);
+	element.style.backgroundColor = '#0068af';
+	
+	for (var i=0; i < step; i++)
+	{
+		<?php if(defined('ATMAIL_OPEN_SOURCE')): ?>
+		// ignore steps 4 & 5 for open-source version
+		if (i == 4 || i == 5)
+			continue;
+
+		<?php endif; ?>
+		element = document.getElementById('step'+i);
+		element.style.backgroundColor = '#4A4956';
+		element.setAttribute('title', 'go back to step ' + i);
+		element.innerHTML = "<a href='index.php?step=" + i + "'></a>";
+	}
+}
+
+var helpTopics = new Array();
+helpTopics['sqluser'] = "Enter the name of your SQL user account.<p>If you want the installer to create a new database for the Atmail tables you must enter a username here that has permission to create databases on the system.";
+helpTopics['sqlhost'] = "Enter the IP address or Hostname of the machine running your MySQL database server. <p>By default the installer will use the localhost address. Verfiy you have the local MySQL database server running, or specify the details to an external database server.";
+helpTopics['dbname'] = "Here you have two options:<ol><li>Enter the name of an existing database you wish to use for Atmail and uncheck 'Create Database'. If this is an existing Atmail database uncheck 'Create Database Tables' also</li><p><li>Enter the name of a new database you wish to have created for Atmail and check both 'Create Database' and 'Create Database Tables'</li></ol>";
+helpTopics['dbcreate'] = "Check this box if you want the installer to attempt to create the database you named. If you named an existing database uncheck this.";
+helpTopics['create_tables'] = "Check this box if you want the installer to attempt to create the Atmail tables in the database you named. If you have an existing Atmail database with tables set up then uncheck this.";
+helpTopics['smtphost'] = "Enter the hostname or IP of the SMTP server for outgoing messages.<p>Verify you have IP relay access to the server, or optionally specify SMTP authentication for outgoing mail.";
+helpTopics['admin_email'] = "Enter the email address for the Atmail Admin.<p>This is used as a reference on the Webmail interface for assistance";
+helpTopics['smtp_auth']= "Optionally use SMTP Authentication for outgoing messages if supported by your SMTP server.<p> By default this is not required if the SMTP server accepts messages from your IP address."
+helpTopics['smtpauth_username']= "Specify the username used for SMTP Authentication."
+helpTopics['smtpauth_password']= "Specify the password for SMTP authentication."
+helpTopics['downloadid']= "Enter the unique DownloadID which was provided when you purchased Atmail.<p>See the invoice you received via email for the DownloadID details."
+helpTopics['hostname']= "The hostname of the server for the software license"
+helpTopics['serial']= "Enter the Serial key provided for your license. Copy and paste this from the registration email or the license website"
+
+var timeout;
+
+function info(topic, e, timeout)
+{
+	var info = document.getElementById('infobox');
+	var helptext = document.getElementById('helptext');
+	helptext.innerHTML = helpTopics[topic];
+	info.style.display = 'block';
+}
+
+function closeInfo()
+{
+	var info = document.getElementById('infobox');
+	info.style.display = 'none';
+}
+
+function toggleFields(sqlType)
+{
+	var table = document.getElementById('mysqlinfo');
+	if (sqlType == 'sqlite') {
+		table.style.display='none';
+	} else {
+		table.style.display='';
+	}
+}
+
+function checkAgreement(form)
+{
+    if (form.i_agree.checked)
+        return true;
+
+    alert('You must agree to the license to install and use @Mail');
+    return false;
+}
+
+</script>
+
+</head>
+
+<body onLoad="updateProgressBar(<?php echo $var['step'] ?>)">
+	<div id="container">
+		<div id="top"></div>
+		<div id="header">
+			<div id="logo"></div>
+
+			<div id="progress_bar">
+				<div id="step0"></div>
+				<div id="step1"></div>
+				<div id="step2"></div>
+				<div id="step3"></div>
+				<?php if(!defined('ATMAIL_OPEN_SOURCE')): ?>
+				<div id="step4"></div>
+				<div id="step5"></div>
+				<?php endif; ?>
+				<div id="step6"></div>
+				<div id="step7"></div>
+			</div>
+		</div>
+		<div id="content">
+
+<?php if($var['step'] == '0'): ?>
+<h1>Atmail Pre-installation check</h1>
+<?php endif; ?>
+
+			<?php if(defined('ATMAIL_OPEN_SOURCE') && $var['step'] != '0'): ?>
+			<h1>Atmail-Open  Installation</h1>
+
+			<?php elseif(!defined('ATMAIL_OPEN_SOURCE') && $var['step'] != '0'): ?>
+			<h1>Atmail WebMail Client Installation</h1>
+			<?php endif; ?>
+
+			<?php echo $var['output'] ?>
+		</div>
+		<div id="footer"></div>
+		<div id="bottom"></div>
+	</div>
+
+</body>
+</html>

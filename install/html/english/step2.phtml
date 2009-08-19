@@ -1,0 +1,161 @@
+<h2>Step 2: SQL Server Setup</h2>
+
+<?php if(!extension_loaded('mysql') && !extension_loaded('sqlite')): ?>
+<div class="error">
+	<h3>Error</h3>
+	<p>Your system seems to be missing the PHP MySQL and SQLite extensions. 
+	Atmail requires either the MySQL or SQLite extension installed. 
+	Please install either the MySQL or SQLite extension before continuing.</p>
+</div>
+<?php endif; ?>
+
+<p>Now we need to collect your SQL server details and the name you wish to use for your 
+Atmail Database.</p>
+
+<?php if($var['db_connect_error']): ?>
+<div class="error">
+	<h3>Error</h3>
+	<p>Could not connect to Database Server:</p>
+	<p><?php echo $var['db_connect_error'] ?></p>
+</div>
+<?php endif; ?>
+
+<form name="sql" action="index.php" method="POST">
+	<input type="hidden" name="step" value="2">
+<table>
+<tr>
+<td nowrap>
+<table width="400" >
+		<tr>
+			<td><label for="sqltype">SQL Server Type</label></td>
+			<td><select name="sqltype" onFocus="closeInfo()" onchange="toggleFields(this.value)">
+					<?php if (extension_loaded('mysql')): ?>
+					<option value="mysql">MySQL</option>
+					<?php endif; ?>
+					
+					<?php if (extension_loaded('sqlite_disabled')): ?>
+					<option value="sqlite">SQLite</option>
+					<?php endif; ?>
+				</select> <?php echo $var['sqltype_error'] ?>
+			</td>
+		</tr>
+		<?php if ($var['sqlType'] == 'sqlite' && $var['db_create_error']): ?>
+		<tr class="error"><td colspan="2"><span class="error">Could not create the SQLite database.<?php echo $var['db_create_error'] ?></span></tr>
+		<?php endif; ?>
+</table>
+<table width="400" id="mysqlinfo">
+		<?php if($var['db_connect_error']): ?>
+		<tr class="error">
+			<td colspan="2"><span class="error">Could not connect to database server, please check the hostname or IP</span></td>
+		</tr>
+		
+		<tr class="error">
+		
+		<?php else: ?>
+		<tr>
+		<?php endif; ?>
+			<td><a href="javascript://" title="help" onClick="info('sqlhost', event, 8000)">?</a> 
+			<label for="sqlhost">SQL Server Hostname or IP</label></td>
+			<td><input type="text" name="sqlhost" value="<?php echo $var['sql_host'] ?>" size="20" onfocus="info('sqlhost', event, 8000)"></td>
+		</tr>
+		
+		<?php if($var['sqluser_error']): ?>
+		<tr class="error">
+			<td colspan="2"><span class="error">Please Enter an SQL Username</span></td>
+		</tr>
+		<tr class="error">
+		<?php else: ?>
+		<tr>
+		<?php endif; ?>
+		
+			<td>
+			<label for="sqluser">SQL Username</label></td>
+			<td><input type="text" name="sqluser" value="<?php echo $var['sql_user'] ?>" size="20" onFocus="info('sqluser', event, 8000)"></td>
+		</tr>
+		<tr>
+			<td><label for="sqlpass">SQL Password</label></td>
+			<td><input type="password" name="sqlpass" value="<?php echo $var['sql_pass'] ?>" size="20" onFocus="closeInfo()"></td>
+		</tr>
+		
+		<?php if($var['db_exists']): ?>
+		<tr class="error">
+			<td colspan="2"><span class="error">Database already exists.
+				Choose another name or uncheck 'Create Database'</span></td>
+		</tr>
+		<tr class="error">
+		<?php endif; ?>
+		
+		<?php if ($var['dbname_empty']): ?>
+		<tr class="error">
+			<td colspan="2"><span class="error">Please enter a database name</span>
+			</td>
+		</tr>
+		<tr class="error">
+		<?php endif; ?>
+		
+		<?php if(!$var['db_exists'] && !$var['dbname_empty']): ?>
+		<tr>
+		<?php endif; ?>
+		
+			<td> 
+			<label for="dbname">Database Name</label></td>
+			<td><input type="text" name="dbname" size="20" value="<?php echo $var['sql_table'] ?>" onFocus="info('dbname', event, 15000)"></td>
+		</tr>
+		
+		<?php if($var['db_create_error']): ?>
+		<tr class="error">
+			<td><span class="error">The database could not be created. Please unsure that the
+			sql user entered has sufficient permissions to create the database. If you do not
+			have access to a user account with sufficient permission please enter the name of an
+			existing database you have access to or get your system admin to create a database 
+			for you then continue the install.</span>
+			</td>
+		</tr>
+		
+		<tr class="error">
+		<?php else: ?>
+		<tr>
+		<?php endif; ?>
+			<td>
+				<a href="javascript://" title="help" onClick="info('dbcreate', event, 15000)">?</a>
+				<label for="create_db">Create Database</label>
+			</td>
+			<td><input type="checkbox" onmouseover="info('dbcreate', event, 15000)" name="create_db" <?php echo $var['check_create_db'] ?>></td>
+		</tr>
+		
+		<?php if($var['table_create_error']): ?>
+		<tr class="error">
+			<td><span class="error">An error occured while creating the database tables.
+			The likely cause is a name clash with an existing table. If you have specified an
+			existing Atmail database above please uncheck 'Create Database Tables' and continue.
+			If not you may need to alter the name of an existing table or create/select a new database for
+			Atmail: <?php echo $var['table_create_error'] ?></span>
+			</td>
+		</tr>
+		<tr class="error">
+		<?php else: ?>
+		<tr>
+		<?php endif; ?> 
+			<td>
+				<a href="javascript://" title="help" onClick="info('create_tables', event, 15000)">?</a>
+				<label for="create_tables">Create Database Tables</label>
+			</td>
+			<td><input type="checkbox" name="create_tables" onmouseover="info('create_tables', event, 15000)" <?php echo $var['check_create_tables'] ?>></td>
+		</tr>
+		</table>
+		<table width="400" >
+		<tr>
+			<td colspan="2"><input type="submit" name="submit" value="Continue &gt;&gt;"></td>
+		</tr>
+	</table>
+	</td>
+	<td valign="top">
+
+	<div id="infobox">
+	        <div id="helptext"></div>
+		</div>
+
+	</td>
+	</tr>
+	</table>
+</form>

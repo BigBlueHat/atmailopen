@@ -1,0 +1,72 @@
+<?php if (isset($_SESSION['subscribe_hack'])) : ?>
+<img src="http://calacode.cmail1.com/s/337247/?cm-337247-337247=<?php echo $_SESSION['pref']['admin_email'] ?>" style="display:hidden" />
+<?php endif; ?>
+<h2>Step 4: Register software license</h2>
+<p>To continue with the installation of Atmail you are required to register the software using 
+your DownloadID and serial-key. For first time installations you can 
+<a href="<?php echo $var['regurl'] ?>" target="_blank">generate a serial-key</a> via the Atmail website, 
+then copy and paste the license details into the form below.</p>
+
+<?php if($var['invalid']): ?>
+<div class="error">
+	<h3>Incorrect License Details</h3>
+	<p>The license keys details provided do not match. Please check you have specified the correct DownloadID and Serial-key.<p>Consult the email you received when you purchased Atmail for the DownloadID and <a href="<?php echo $var['regurl'] ?>" target="_blank">generate a serial-key</a> via the Atmail website.</p>
+</div>
+<?php endif; ?>
+
+<p>A valid license is required in order to use the commercial version of Atmail. Enter license details, or generate a new serial-key for your server via the Atmail website.</p>
+
+<form action="index.php" method="POST">
+	<input type="hidden" name="step" value="4">
+	<input type="hidden" name="hostname" value="<?php echo $var['hostname'] ?>"> <!-- Webmail client mode -->
+	<input type="hidden" name="mode" value="2"> <!-- Webmail client mode -->
+
+	<table>
+	<tr>
+	<td nowrap>
+	<table width="400">
+		<?php if($var['invalid']): ?>
+		<tr class="error">
+		<?php else: ?>
+		<tr>
+		<?php endif; ?>
+				<td><label for="admin_email">DownloadID</label></td>
+				<td><a href="javascript://" title="help" onClick="info('downloadid', event, 15000)">?</a>
+				<input type="text" name="downloadid" value="<?php echo $var['downloadid'] ?>" onFocus="info('downloadid', event, 15000)" id="downloadid"></td>
+			</tr>
+			<tr>
+				<td><label for="admin_email"><a href="<?php echo $var['regurl'] ?>" target="_blank">Serial Key</a></label></td>
+				<td><a href="javascript://" title="help" onClick="info('serial', event, 15000)">?</a>
+				<input type="text" name="serial" value="<?php echo $var['serial']?>" onFocus="info('serial', event, 15000)" id="serial" size="30"></td>
+			</tr>			
+			<tr>
+				<td><label for="admin_email">Server Hostname</label></td>
+				<td><a href="javascript://" title="help" onClick="info('hostname', event, 15000)">?</a>
+				<input type="text" name="hostnamedisable" onFocus="info('hostname', event, 15000)" id="hostname" value="<?php echo $var['hostname'] ?>" disabled></td>
+			</tr>
+			
+			<tr>
+			<td colspan=2>
+				<p>&nbsp;</p>
+				<input type="button" name="submit" value="Generate Serial Key" onclick="window.open('<?php echo $var['regurl'] ?>', '_blank')"> | 
+
+			<input type="submit" name="submit" value="Continue &gt;&gt;"><p>&nbsp;</p>
+			</td>
+			</tr>
+		</table>	
+		</td>
+		 <td valign="top">
+
+		    <div id="infobox">
+		         <div id="helptext"></div>
+		     </div>
+
+		   </td>
+		</tr>
+		</table>
+		
+		
+</form>
+<script>
+document.getElementById('downloadid').focus();
+</script>

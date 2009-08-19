@@ -1,0 +1,128 @@
+<h2>Step 3: SMTP and Admin Email Configuration</h2>
+<p>In this step we will set the SMTP host for the sending of emails from Atmail and set the admin's email address.</p>
+
+<?php if($var['smtp_error']): ?>
+<div class="error">
+	<h3>Error</h3>
+	<p>Could not connect to the specified SMTP server <em><?php echo $var['bad_smtp_host'] ?></em></p>
+	<p><?php echo $var['smtp_error'] ?></p>
+</div>
+<?php endif; ?>
+
+<form action="index.php" method="POST" name="myform">
+	<input type="hidden" name="step" value="3">
+<table>
+<tr>
+<td nowrap>
+<table width="400">
+
+
+		<?php if($var['smtp_error'] && !$var['smtp_auth_error']): ?>
+		<tr class="error">
+		<?php endif; ?>
+
+		<?php if(!$var['smtp_error']): ?>
+		<tr>
+		<?php endif; ?>
+			<td><label for="smtp_host">SMTP Host</label></td>
+			<td><a href="javascript://" title="help" onClick="info('smtphost', event, 15000)">?</a>
+			<input type="text" id="smtphost" name="smtphost" value="<?php echo $var['smtphost'] ?>" onFocus="info('smtphost', event, 15000)"></td>
+		</tr>
+
+		<tr>
+			<td><label for="smtp_host">Use SMTP Authentication</label></td>
+			<td><a href="javascript://" title="help" onClick="info('smtp_auth', event, 15000)">?</a>
+			<input type="checkbox" name="smtp_auth" onclick="showsmtpauth(this)" onmouseover="info('smtp_auth', event, 15000)" <?php echo $var['smtp_auth_check'] ?>></td>
+		</tr>
+
+		<?php if($var['smtp_error'] && $var['smtp_auth_error']): ?>
+		<tr class="error">
+		<?php endif; ?>
+
+		<?php if(!$var['smtp_auth_error']): ?>
+		<tr id="smtpauthuser" style="display:none">
+		<?php else: ?>
+		<tr id="smtpauthuser">
+		<?php endif; ?>
+			<td><label for="smtp_host">SMTP Auth Username</label></td>
+			<td><a href="javascript://" title="help" onClick="info('smtpauth_username', event, 15000)">?</a>
+				<input type="text" name="smtpauth_username" value="<?php echo $var['smtpauth_username'] ?>" onFocus="info('smtpauth_username', event, 15000)"></td>
+		</tr>
+
+		<?php if($var['smtp_error'] && $var['smtp_auth_error']): ?>
+		<tr class="error">
+		<?php endif; ?>
+
+		<?php if(!$var['smtp_auth_error']): ?>
+		<tr id="smtpauthpass" style="display:none">
+		<?php else: ?>
+		<tr id="smtpauthpass">
+		<?php endif; ?>
+			<td><label for="smtp_host">SMTP Auth Password</label></td>
+			<td><a href="javascript://" title="help" onClick="info('smtpauth_password', event, 15000)">?</a>
+				<input type="password" id="smtpauth_password" name="smtpauth_password" value="<?php echo $var['smtpauth_password'] ?>" onFocus="info('smtpauth_password', event, 15000)"></td>
+		</tr>
+
+		<?php if($var['admin_email_error']): ?>
+		<tr class="error">
+			<td colspan="2">
+				<span class="error">Invalid email address given</span>
+			</td>
+		</tr>
+		<tr class="error">
+		<?php else: ?>
+		<tr>
+		<?php endif; ?>
+			<td><label for="admin_email">Admin Email</label></td>
+			<td><a href="javascript://" title="help" onClick="info('admin_email', event, 15000)">?</a>
+			<input type="text" name="admin_email" value="<?php echo $var['admin_email'] ?>" onFocus="info('admin_email', event, 15000)" id="adminemail"></td>
+		</tr>
+		<tr>
+			<td colspan="2">
+				<input type="checkbox" name="subscribe" value="1" checked /> <label for="subscribe">Signup to receive email updates of new versions and special Atmail announcements. Never disclosed to 3rd parties and No Spam!</label>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2"><input type="submit" name="submit" value="Continue &gt;&gt;"><p>&nbsp;</p><p>&nbsp;</p>
+		</tr>
+	</table>
+	</td>
+	 <td valign="top">
+
+	    <div id="infobox">
+	         <div id="helptext"></div>
+	     </div>
+
+	   </td>
+	</tr>
+	</table>
+</form>
+
+<script>
+
+<?php if($var['smtp_error'] && !$var['smtp_auth_error']): ?>
+document.getElementById('smtphost').focus();
+<?php endif; ?>
+
+<?php if($var['smtp_error'] && $var['smtp_auth_error']): ?>
+document.getElementById('smtpauth_password').focus();
+<?php endif; ?>
+
+<?php if(!$var['smtp_error']): ?>
+document.getElementById('adminemail').focus();
+<?php endif; ?>
+
+function showsmtpauth(obj) {
+
+if(obj.checked)	{
+	document.getElementById('smtpauthuser').style.display='';
+	document.getElementById('smtpauthpass').style.display='';
+} else {
+	document.getElementById('smtpauthuser').style.display='none';
+	document.getElementById('smtpauthpass').style.display='none';
+	document.getElementById('smtpauth_username').value ='';
+	document.getElementById('smtpauth_password').value ='';
+}
+
+}
+</script>
