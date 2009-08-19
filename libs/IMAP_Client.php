@@ -188,7 +188,7 @@ class IMAP_Client
 		$this->loggedIn = true;
 
 		// Load the folder namespace
-		$this->namespace();
+		$this->_namespace();
 
 		return true;
 	}
@@ -574,7 +574,7 @@ class IMAP_Client
 	/**
 	 * Sends the NAMESPACE command and parses the response
 	 */
-	function namespace()
+	function _namespace()
 	{
 
 		if (!$this->loggedIn)
@@ -616,7 +616,7 @@ class IMAP_Client
 
         // Double check
         if ($this->Prefix == '' && !$this->select('Trash') && $this->select('INBOX.Trash')) {
-            $this->Prefix = 'INBOX.';
+            $this->Prefix = 'INBOX';
             $this->Deliminator = '.';
         }
 
@@ -1500,7 +1500,7 @@ class IMAP_Client
 		$prefix = $this->Prefix;
 		$prefix = str_replace("/", "\/", $prefix);
 		if(!preg_match("/^{$prefix}/i", $mailbox))
-			return $this->Prefix . $mailbox;
+			return $this->Prefix . $this->Deliminator . $mailbox;
 		else
 			return $mailbox;
 
