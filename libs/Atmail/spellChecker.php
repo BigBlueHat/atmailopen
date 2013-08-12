@@ -52,7 +52,7 @@ class spellChecker
 
 			// Execute the aspell command and open file pointers for input/output
 			$descriptorspec = array(array("pipe", "r"), array("pipe", "w"));
-			$this->aspell_proc = proc_open("{$pref['aspell_path']} -a -l $dict --sug-mode=fast", $descriptorspec, $pipes);
+			$this->aspell_proc = proc_open("{$pref['aspell_path']} -a -l $dict --sug-mode=fast --encoding=utf-8", $descriptorspec, $pipes);
 			$this->aspell_input = $pipes[0];
 			$this->aspell_output = $pipes[1];
 

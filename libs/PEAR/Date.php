@@ -3544,9 +3544,8 @@ class Date
         if ($this->ob_invalidtime)
             return $this->_getErrorInvalidTime();
 
-        // brad@staff.atmail.com - was not calculating for DST
-        //$hn_rawoffset = $tz->getRawOffset() - $this->tz->getRawOffset()
-        $hn_rawoffset = $tz->getOffset($tz->inDaylightTime($this)) - $this->tz->getRawOffset();
+        $hn_rawoffset = $tz->getRawOffset() - $this->tz->getRawOffset();
+        //$hn_rawoffset = $tz->getOffset($tz->inDaylightTime($this)) - $this->tz->getRawOffset();
 
         $this->tz     = new Date_TimeZone($tz->getID());
 

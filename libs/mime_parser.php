@@ -1040,8 +1040,8 @@ class mime_parser_class
 				&& IsSet($this->headers['Multipart'])
 				&& $this->body_parser_state != MIME_PARSER_BODY_DONE)
 				{
-					if($this->body_parser_state != MIME_PARSER_BODY_DATA)
-						return($this->SetPositionedError('incomplete message body part', $part['Position']));
+					//if($this->body_parser_state != MIME_PARSER_BODY_DATA)
+					//	return($this->SetPositionedError('incomplete message body part', $part['Position']));
 					if(!$this->SetPositionedWarning('truncated message body part', $part['Position']))
 						return(0);
 				}

@@ -33,7 +33,7 @@ Atmail Database.</p>
 					<option value="mysql">MySQL</option>
 					<?php endif; ?>
 					
-					<?php if (extension_loaded('sqlite_disabled')): ?>
+					<?php if (extension_loaded('sqlite')): ?>
 					<option value="sqlite">SQLite</option>
 					<?php endif; ?>
 				</select> <?php echo $var['sqltype_error'] ?>

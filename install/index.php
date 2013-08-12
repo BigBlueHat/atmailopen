@@ -31,9 +31,8 @@ $pref['installed'] = 0;
 // or "AccessFile" is not == ".htaccess" in httpd.conf then our .htaccess
 // will not have stopped access
 // Do before copying Config.php.default, otherwise will overwrite it!
-if (file_exists('.htaccess') || (isset($pref) && $pref['installed']))
-{
-        echo <<<EOF
+if (file_exists('.htaccess') || (isset($pref) && $pref['installed'])) {
+	echo <<<EOF
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>@Mail already installed</title>
@@ -46,26 +45,11 @@ webmail/install/.htaccess file. Once removed reload the browser to continue the 
 </body></html>
 EOF;
 
-        exit;
+    exit;
 }
 
-/*
-if (!file_exists('../../server-install.php'));
-{
-
-		$vars['install_error'] = "Server mode package of @Mail detected. The Web-based installer cannot be run for this mode, please run via the command line as root: cd /usr/local/atmail/ ; php server-install.php ";
-		$vars['install_error2'] = "If you only require to install the Webmail version of @Mail, delete the /usr/local/atmail/server-install.php script and reload the browser to continue";
-
-	    $vars['output'] = parse("html/english/install_error.html", $vars);
-	    echo parse("html/english/template.html", $vars);
-		exit;
-}
-*/
-
-if (!file_exists('../libs/Atmail/Config.php'))
-{
-    if (!copy('../libs/Atmail/Config.php.default', '../libs/Atmail/Config.php'))
-    {
+if (!file_exists('../libs/Atmail/Config.php')) {
+    if (!copy('../libs/Atmail/Config.php.default', '../libs/Atmail/Config.php')) {
         $libDir = dirname(dirname(__FILE__)) . '';
 
 	    $vars['php_version'] = PHP_VERSION;
@@ -81,8 +65,7 @@ if (!file_exists('../libs/Atmail/Config.php'))
 }
 
 // Initial check for PHP version >= 4.3.0
-if (version_compare(PHP_VERSION, '4.3.0', '<'))
-{
+if (version_compare(PHP_VERSION, '4.3.0', '<')) {
     $vars['php_version'] = PHP_VERSION;
     $vars['install_error'] = 'PHP Version not Supported';
 	$vars['install_error2'] = "@Mail requires PHP version >= 4.3.0. Your version is {$vars['php_version']}, the installation cannot proceed until you install a more recent version of PHP";
@@ -101,8 +84,7 @@ if (isset($pref['opensource']))
 
 // Set session vars for extension checks
 $_SESSION['checked_extensions'] = 1;
-if (count($ext['opt']))
-{
+if (count($ext['opt'])) {
     $_SESSION['missing_ext'] = $ext['opt'];
 }
 
@@ -126,16 +108,14 @@ define('ATMAIL_INSTALL_SCRIPT', 1);
 // Find out which step of the install is required
 $vars['step'] = $step = (!empty($_REQUEST['step'])) ? $_REQUEST['step'] : 0;
 
-if (file_exists("step$step.php"))
-{
+if (file_exists("step$step.php")) {
 	require_once("step$step.php");
-}
-else
+} else {
 	$vars['output'] = parse("$htmlPath/file_missing_error.html");
+}
 
 // Output the page
 echo parse("$htmlPath/template.phtml", $vars);
-
 
 //
 // Functions
@@ -145,8 +125,7 @@ echo parse("$htmlPath/template.phtml", $vars);
 // Send user to a install step
 function gotoStep($step, $args=null)
 {
-	if (is_array($args))
-	{
+	if (is_array($args)) {
 		foreach ($args as $k => $v)
 			$extra .= "&$k=$v";
 	}
@@ -177,5 +156,3 @@ function strleft($s1, $s2)
 {
 	return substr($s1, 0, strpos($s1, $s2));
 }
-
-?>

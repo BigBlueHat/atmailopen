@@ -36,15 +36,14 @@ class Log
 		global $atmail, $pref;
 
 		// can't establish db instance
-		//if (is_a($atmail->db, 'SQL'))
-		//	$this->db =& $atmail->db;
-		//else
-		//{
-			//require_once('libs/Atmail/SQL.php');
-        $this->db = mysql_connect($pref['sql_host'], $pref['sql_user'], $pref['sql_pass'], $pref['sql_table']);
-        mysql_select_db($pref['sql_table'], $this->db);
-
-		//}
+		if (is_a($atmail->db, 'SQL'))
+			$this->db =& $atmail->db;
+		else
+		{
+			require_once('libs/Atmail/SQL.php');
+			$this->db = new SQL;
+			$this->db->table_names();
+		}
 	}
 
 	function write_log($type, $msg=null)
@@ -54,26 +53,19 @@ class Log
 		else
             return -1;
 
-		if (!empty($msg))
-		{
+		if (!empty($msg)) {
 			$this->msg = $msg;
-			$msg = mysql_real_escape_string($msg);
 		}
 
-		if ($this->Account)
-		{
-			$account = mysql_real_escape_string($this->Account);
-		}
-		else
+		if ($this->Account) {
+			$account = $this->Account;
+		} else {
 			$account = 'System';
-
-		//$query = "INSERT INTO Log_{$this->errtype} (Account, LogMsg, LogDate) VALUES (?, ?, NOW())";
-		//$data =  array($account, $this->msg);
-		//$this->db->sqldo($query, $data);
-
-		$query = sprintf("INSERT INTO Log_{$this->errtype} (Account, LogMsg, LogDate) VALUES ('%s', '%s', NOW())", $account, $msg);
-        mysql_ping($this->db);
-		$res = mysql_query($query, $this->db);
+		}
+		
+		$query = "INSERT INTO Log_{$this->errtype} (Account, LogMsg, LogDate) VALUES (?, ?, {$this->db->NOW})";
+		$data =  array($account, $this->msg);
+		$this->db->sqldo($query, $data);
 	}
 
 	// Raw log into the database for the log-daemon, use mysql_ping() if insert fails
@@ -86,27 +78,19 @@ class Log
 		else
             return -1;
 
-		if (!empty($msg))
-		{
+		if (!empty($msg)) {
 			$this->msg = $msg;
-			$msg = mysql_real_escape_string($msg);
 		}
 
-		if ($this->Account)
-		{
-			$account = mysql_real_escape_string($this->Account);
-		}
-		else
+		if ($this->Account) {
+			$account = $this->Account;
+		} else {
 			$account = 'System';
-
-		//$query = "INSERT INTO Log_{$this->errtype} (Account, LogMsg, LogDate) VALUES (?, ?, NOW())";
-		//$data =  array($account, $this->msg);
-		//$this->db->sqldo($query, $data);
-
-		$query = sprintf("INSERT INTO Log_{$this->errtype} (Account, LogMsg, LogDate) VALUES ('%s', '%s', NOW())", $account, $msg);
-        mysql_ping($this->db);
-		$res = mysql_query($query, $this->db);
-
+		}
+		
+		$query = "INSERT INTO Log_{$this->errtype} (Account, LogMsg, LogDate) VALUES (?, ?, {$this->db->NOW})";
+		$data =  array($account, $this->msg);
+		$this->db->sqldo($query, $data);
 	}
 
 	function logcheck($type, $ip=null)
@@ -122,14 +106,15 @@ class Log
 
 		    //if ($ip && $this->account && !preg_match('/New Account/i', $ip) ) {
 
-		    $query = sprintf("select count(id) from Log_$type where LogMsg like '%s' and LogDate > DATE_SUB(NOW(), INTERVAL 24 HOUR) and Account='%s'", $ip, $this->Account);
-		    $res = mysql_query($query);
-		    if ($res === false)
-                return -1;
+		    //$query = sprintf("select count(id) from Log_$type where LogMsg like '%s' and LogDate > DATE_SUB(NOW(), INTERVAL 24 HOUR) and Account='%s'", $ip, $this->Account);
+		    //$res = mysql_query($query);
+		    //if ($res === false)
+            //    return -1;
 
-            return mysql_result($res, 0);
+            //return mysql_result($res, 0);
 		//   } else	{
-		  //      return $this->db->getvalue( "select count(id) from Log_$type where LogMsg like ? and LogDate > DATE_SUB(NOW(), INTERVAL 24 HOUR)", array($ip) );
+		    $date_sub = $this->db->date_sub('NOW', '24 HOUR', true);
+            return $this->db->getvalue( "select count(id) from Log_$type where LogMsg like ? and LogDate > $date_sub and Account = ?", array($ip, $this->Account) );
 		 //	}
 
 		}
@@ -159,7 +144,7 @@ class Log
 	function addrelay($ip)
 	{
 		global $pref;
-
+        /*
 		if (!preg_match('/\d+\.\d+\.\d+\.\d+/', $ip))
             return 1;
 
@@ -182,7 +167,7 @@ class Log
             $query = sprintf("UPDATE MailRelay set DateAdded=NOW() where IPaddress='%s' and Account='User'", $ip);
             $res2 = mysql_query($query);
 		}
-
+        */
 		return;
 	}
 
@@ -195,8 +180,9 @@ class Log
 		$time = time();
 
 		// Update the users last login date
-		$query = sprintf("update UserSession set LastLogin='%d' where Account='%s'", $time, $user);
-        mysql_query($query);
+		//$query = sprintf("update UserSession set LastLogin='%d' where Account='%s'", $time, $user);
+        //mysql_query($query);
+        $this->db->sqldo("update UserSession set LastLogin=? where Account=?", array($time, $user));
 		return 1;
 	}
 

@@ -43,9 +43,10 @@ h2 {font-size: 160%; COLOR: #0068af}
 }
 
 #logo {
-	background: url(../images/logo.png) no-repeat;
-	width: 156px;
-	height: 48px;
+	background: url(../images/logo-install-open.png) no-repeat;
+	width: 154px;
+	height: 32px;
+	margin: 10px 0 0 10px;
 }
 
 #bottom {

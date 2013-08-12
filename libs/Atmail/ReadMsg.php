@@ -22,7 +22,8 @@ class ReadMsg
 	var $inline;
 	var $emailattachname;
 	var $attachedemails = array();
-
+    var $processedSections = array();
+    
 	/**
 	 * Class constructor
 	 *
@@ -199,21 +200,21 @@ class ReadMsg
 				$this->$field = $this->mail->decode_language($this->Charset, $this->$field);
 			}
 		}
-		
+
 	    $this->date = $this->parser->get_header_field('Date');
 
 		$date = $this->date ? $this->date : 'today';
 
 		$date = $this->mail->calc_timezone($date);
 		$time = strtotime($date);
-		setlocale(LC_TIME, strtolower($this->Language), 'en_US');
-
-		if ($this->Language == "japanese")
-			$this->date = strftime("$this->mail->DateFormat %a $this->mail->TimeFormat", $time);
-		else {
-			$this->date = strftime("%a " . $this->mail->DateFormat . " " . $this->mail->TimeFormat, $time);
-			$this->date = iconv('iso-8859-1', "UTF-8", $this->date);
-		}
+        if ($this->Language == "japanese") {
+            setlocale(LC_TIME, 'ja_JP.UTF-8', 'en_US');
+            $this->date = strftime("{$this->mail->DateFormat} %a {$this->mail->TimeFormat}", $time);
+        } else {
+            setlocale(LC_TIME, strtolower($this->Language), 'en_US');
+            $this->date = strftime("%a " . $this->mail->DateFormat . " " . $this->mail->TimeFormat, $time);
+            $this->date = iconv('iso-8859-1', "UTF-8", $this->date);
+        }
 
 	    // Take away the timezone and seconds
 	    $this->date = preg_replace('/:\d\d \+?-?\d{4}.*/', '', $this->date);
@@ -299,18 +300,23 @@ class ReadMsg
 		}
 
 	    $this->dump_entity();
-	    if (isset($this->html) && !empty($this->html)) {
-	        $this->html = $atmail->escape_jscript($this->html);
-	    }
-	    if (isset($this->txt) && !empty($this->txt)) {
-            $this->txt = $atmail->escape_jscript($this->txt);
-        }
-        if (isset($this->multiparttxt) && !empty($this->multiparttxt)) {
+
+	    if (isset($this->multiparttxt) && !empty($this->multiparttxt)) {
             $this->multiparttxt = $atmail->escape_jscript($this->multiparttxt);
         }
-	    
+
+	    if (isset($this->html) && !empty($this->html)) {
+	        $this->html = $atmail->escape_jscript($this->html);
+	        if (isset($this->multiparttxt)) $this->html .= $this->multiparttxt;
+	    }
+
+	    if (isset($this->txt) && !empty($this->txt)) {
+            $this->txt = $atmail->escape_jscript($this->txt);
+	        if (isset($this->multiparttxt)) $this->txt .= $this->multiparttxt;
+        }
+
 		$this->scan_inline();
-    
+
 		// Fix an error where certain messages cannot be displayed ( e.g Apple mailers as multipart msgs )
 		if (!$this->html && !$this->txt)
 			$this->txt = $this->multiparttxt;
@@ -348,7 +354,7 @@ class ReadMsg
 	 			foreach ($body as $line) {
 	 			    // strip unnecessary whitespace
                     $line = preg_replace("/\s+/", ' ', $line);
-                    
+
 	 				$lineSize = strlen($line);
 					$last = 0;
 					$count = 0;
@@ -381,7 +387,7 @@ class ReadMsg
 	 			}
 	 			$body = $tmpBody;
 	 		}
-	 		
+
 			// end break up long HTML lines
 
 			$this->Charset = $part->get_charset();
@@ -394,7 +400,7 @@ class ReadMsg
 
 			}
 			// Ignore multipart/alternative messages that contain a text attachment of the same message ( decoded from HTML )
-			elseif ((($type == 'text' || $type == 'message') && $this->mimetype != 'multipart/alternative'
+			elseif ((($type == 'text' || $type == 'message') && $part->parent_mime_type() != 'multipart/alternative'
 			     && ($subtype == 'plain' || preg_match('/text\/(v|i)?calendar/i', $this->mimetype)) && !$part->is_attachment())
 			     || !$this->mimetype || $this->mimetype == 'multipart/report')
 			{
@@ -456,17 +462,17 @@ class ReadMsg
 			//elseif(($type == 'text' || $type == 'message') && $this->txt && !$this->html && $subtype == 'html' && strpos($part->parent_ctype, 'alternative') !== false ||
 	        //($type == 'text' || $type == 'message') && !$this->html && !$this->txt)
 	        elseif (($type == 'text' || $type == 'message') && !$part->is_attachment()
-	        && (($this->mimetype == 'multipart/alternative')
-	        || ($this->mimetype != 'multipart/alternative' && !$this->txt && !$this->html)
+	        && (($part->parent_mime_type() == 'multipart/alternative')
+	        || ($part->parent_mime_type() != 'multipart/alternative' && !in_array($part->parent_ctype, $this->processedSections))
 	        || $this->attachedemail))
 	        {
-                if ($subtype == 'html')
+                if (!$this->html && $subtype == 'html')
                 {
                     $this->txt = '';
 
                 	// HTML email msg
                     foreach ($body as $line)
-                    {                        
+                    {
 						$line = $this->mail->decode_language($this->Charset, $line);
 
 						// Verfiy this is still required
@@ -492,11 +498,10 @@ class ReadMsg
 						//$line = $atmail->escape_jscript($line);
 						//$line = $this->scanpgp($line);
 	                    $this->html .= $line . "\n";
-
 	                }
 	            }
 
-                if ($subtype == 'plain')
+                elseif (!$this->txt && $subtype == 'plain')
                 {
                     foreach ($body as $line)
                     {
@@ -518,8 +523,8 @@ class ReadMsg
 	            }
 	        }
 
-			// An inline / CID image. Display the image embeded into the email-message
-	        elseif ($type == 'image' && $part->get_contentid() && $subtype != 'tiff')
+			// A CID image. Display the image embeded into the email-message
+	        elseif ($part->is_image() && $part->get_contentid() && $subtype != 'tiff')
 	        {
 				$path = $part->get_path();
 				$cid = $part->get_contentid();
@@ -541,8 +546,10 @@ class ReadMsg
                 $this->attachname[$filename]['type'] = "pic";
 	            $this->attachname[$filename]['size'] = $size;
 	            $this->attachname[$filename]['path'] = $path;
-	            $this->attachname[$filename]['name'] = $this->mail->quote_header($filename);
+	            $this->attachname[$filename]['rawname'] = $filename;
+	            $this->attachname[$filename]['name'] = $this->mail->quote_header($part->get_filename());
 	            $this->attachname[$filename]['cid']  = $cid;
+	            $this->attachname[$filename]['desc'] = $part->get_header_field("Content-Description");
 
 	            # Save the name correctly, when forwarding
 	            #$self->{attachname}{$filename}{mime} = $this->mail->quote_header($filename); $entity->head->mime_attr('content-type.name') );
@@ -601,6 +608,8 @@ class ReadMsg
 	            $this->attachname[$filename]['mime'] = $part->get_mime_type();
 				$this->attachname[$filename]['desc'] = $part->get_header_field("Content-Description");
             }
+
+            $this->processedSections[] = $part->parent_ctype;
 	    }
 	}
 
@@ -787,7 +796,17 @@ class ReadMsg
 	{
 		foreach ($this->inline as $k => $v)
 		{
-			$this->html = str_replace("cid:$k", $v, $this->html);
+			if (strpos($this->html, "cid:$k") !== false) {
+			    $this->html = str_replace("cid:$k", $v, $this->html);
+			} else {
+			    // cid reference did not exist in the HTML
+			    // so we should display the image as an attachment
+			    foreach ($this->attachname as $k2 => $v2) {
+			        if ($v2['cid'] == $k) {
+			            $this->attachname[$k2]['inline'] = false;
+			        }
+			    }
+			}
 		}
 
 		$this->html = preg_replace('/js:opencompose/i', 'javascript:opencompose', $this->html);
@@ -973,18 +992,18 @@ _EOF;
 	function cleanEmailAddress($address)
 	{
     	$address = trim($address);
-        
+
         // add quotes around personal parts
         $address = preg_replace('/(^|,|;)\s*([^"\']{1}[^@]+?[^"\',;]{1})(?!Group)\s+([^\s]+?@[a-z0-9.\-]+)/i', '$1"$2" $3', $address);
-        
+
         // add angle brackets around address parts
-        $address = preg_replace('/(?<!"<\')([^\s]+?@[a-z0-9.\-]+)(?!>|"|\')(,|;|$)/i', '<$1>$2', $address);  
-        
+        $address = preg_replace('/(?<!"<\')([^\s]+?@[a-z0-9.\-]+)(?!>|"|\')(,|;|$)/i', '<$1>$2', $address);
+
         // Convert single quotes to double quotes
         $address = preg_replace("/'([^<]+?)' </", '"$1" <', $address);
-        
+
         return $address;
 	}
-	
+
 } // end ReagMsg
 ?>

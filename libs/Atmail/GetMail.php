@@ -991,16 +991,15 @@ class GetMail
 		}
 
 	    $newdate = strtotime($newdate);
-		$ctime = localtime(time(), true);
+		$ctime = localtime(null, true);
 
 	    // Get the hour and minute of current time
 	    $hour   = $ctime['tm_hour'];
 	    $minute = $ctime['tm_min'];
 
-
-		if ( $newdate > ( time() - ( ( $minute * 60 ) + ( $hour * 60 * 60 ) ) ) )
+        if ( date('dmy', $newdate) == date('dmy') ) {
 	        $newdate = strftime( $atmail->parse("html/$atmail->Language/msg/today.html") . " $this->TimeFormat", $newdate );
-	    elseif ( $this->Language != "japanese" && $newdate > ( time() - ( 60 * 60 * 24 * 7 ) ) ) {
+        } elseif ( $this->Language != "japanese" && date('W', $newdate) == date('W') ) {
 	        $newdate = strftime( "%a $this->TimeFormat", $newdate);
 
 			if($this->Language == 'polish')
@@ -1667,6 +1666,7 @@ password for the account. Server returned ( $error )";
 		// Loop through each folder and append the folder to the select box
 	    foreach ($folders as $folder)
 	    {
+	        $encFolder = urlencode($folder);
 			// Skip if the folder matches the current selection, or the Inbox via POP3
 			if ( (!empty($curfolder) && preg_match("/^$curfolder$/i", $folder)) || !$folder
 	          || $folder == "Inbox" && ( !$domains[$this->Pop3host] && $this->Type == "sql" && $_SERVER['SCRIPT_NAME'] != "search.php" ) || $arr["$folder"] == 1) continue;
@@ -1676,24 +1676,24 @@ password for the account. Server returned ( $error )";
 	        	&& $pref['imap_folders']&& preg_match('/Sent|Trash|Drafts/', $folder))
 	        {
 	            $sub = preg_replace('/^INBOX\./', '', $folder);
-	            $tmp .= "<option value=\"$folder\">$sub</option>";
+	            $tmp .= "<option value=\"$encFolder\">$sub</option>";
 	        }
 	        elseif ( $pref['imap_subdirectory'] && $this->Type == "imap"
 	          && $pref['imap_folders'] )
 	        {
 	            $sub = preg_replace('/^INBOX\./', 'Inbox/', $folder);
-	            $tmp .= "<option value=\"$folder\">$sub</option>";
+	            $tmp .= "<option value=\"$encFolder\">$sub</option>";
 	        }
 
 			// If we are using POP3, the folder-name is unique, take away the trailing / 's
 			elseif ( $this->Type == "pop3" )
 	        {
-				$sub = preg_replace('/.*\//', '', $folder);
+				$sub = urlencode(preg_replace('/.*\//', '', $folder));
 	            $tmp .= "<option value=\"$sub\">$folder</option>";
 	        }
 
 			else
-	            $tmp .= "<option value=\"$folder\">$folder</option>";
+	            $tmp .= "<option value=\"$encFolder\">$folder</option>";
 
 		// Avoid display duplicate folders if they are returned
 		$arr["$folder"] = 1;
@@ -1760,9 +1760,9 @@ password for the account. Server returned ( $error )";
 		}
 
 		$encdata = iconv($encoding, 'UTF-8', $data);
-
+        
 		if (strlen($encdata) > 0 ) {
-			return $encdata;
+			return trim($encdata);
 		} else {
 			return $data;
 		}
@@ -1772,22 +1772,46 @@ password for the account. Server returned ( $error )";
 	// Fix a header and take away unnessasary characters
 	function quote_header($header)
 	{
-	    if (preg_match('/\s*=\?([^\?]+)\?([QqBb])/', $header, $m)) {
-	        if (strtoupper($m[2]) == 'Q') {
-                $header = preg_replace('/\s*=\?([^\?]+)\?[Qq]\?([^\?]+)?\?=/e', 'GetMail::decode_language(\'$1\', GetMail::decode_mime_head(\'$1\', \'$2\'))', $header);
-	        } else {
-    		    $header = preg_replace('/\s*=\?([^\?]+)\?[Bb]\?([^\?]+)?\?=/e', 'GetMail::decode_language(\'$1\', base64_decode(\'$2\'))', $header);
-	        }
-	    } else {
-	        $header = GetMail::decode_language('', $header);
-	    }
+        // Detect if we may need decoding (avoid regex later if not)
+        if (strpos($header, '?=')) {
+    
+            $headerParts = preg_split('/,|;/', $header);
+            $decode = true;
+        } else {
+            
+            // Catch a Non-Standard(?) MIME charset encoding
+            // This was required for a client who got many emails with
+            // this type of encoding
+            if (preg_match('/^(ISO-8859-\d+)\'.*?\'(.+)/i', $header, $m)) {
+                return iconv($m[1], 'UTF-8', rawurldecode($m[2]));
+            }
+            
+            $headerParts = array($header);
+            $decode = false;
+        }
+    
+        $decoded = '';
+    
+        foreach ($headerParts as $h) {
 
-        $header = preg_replace('/(.+?)<(.*?)>/', '$1&lt;$2&gt;', $header);
-        $header = str_replace(array('<', '>'), '', $header);
-	    $header = trim($header);
-
-		return $header;
-	}
+            if ($decode && preg_match('/\s*=\?([^\?]+)\?([QqBb])/', $h, $m)) {
+               if (strtoupper($m[2]) == 'Q') {
+                    $h = preg_replace('/\s*=\?([^\?]+)\?[Qq]\?([^\?]+)?\?=/e', 'GetMail::decode_language(\'$1\', GetMail::decode_mime_head(\'$1\', \'$2\'))', $h);
+                } else {
+                    $h = preg_replace('/\s*=\?([^\?]+)\?[Bb]\?([^\?]+)?\?=/e', 'GetMail::decode_language(\'$1\', base64_decode(\'$2\'))', $h);
+                }
+            } else {
+                $h = GetMail::decode_language('', $h);
+            }
+        
+            //$header = preg_replace('/(.+?)<(.*?)>/', '$1&lt;$2&gt;', $h);
+            $h = str_replace(array('<', '>'), array('&lt;', '&gt;'), $h);
+            $h = trim($h);
+            $decoded .= $h;
+        }
+        
+        return $decoded;
+    }
 
 
 	// If the message has special encoding change the format
@@ -1916,52 +1940,51 @@ password for the account. Server returned ( $error )";
 
 	function message_headers($headers, $id=null, $nomsg=null)
 	{
+		global $pref;
 	    $head = null;
-	    $db = array();
+	    $db = $tmp = array();
+        $key = '';
 
-	    if (!is_array($headers))
+	    if (!is_array($headers)) {
 	    	$headers = explode("\n", $headers);
-
-	    foreach ($headers as $v)
-		{
-	        //if ( !$head )
-			//{
-			    $v = trim($v);
-	            if ( preg_match('/^X-UIDL:\s*(.*)/i', $v, $match) )
-	            	$db['EmailUIDL'] = $match[1];
-	            elseif ( preg_match('/^Subject:\s*(.*)/i', $v, $match) )
-	            	$db['EmailSubject'] = $match[1];
-	            elseif ( preg_match('/^From:\s*(.*)/i', $v, $match) )
-	            	$db['EmailFrom'] = $match[1];
-	            elseif ( preg_match('/^To:\s*(.*)/i', $v, $match) )
-	            	$db['EmailTo'] = $match[1];
-	            elseif ( preg_match('/^Date:\s*(.*)/i', $v, $match) )
-	            	$db['EmailDate'] = $match[1];
-	            elseif ( preg_match('/^Content-Type:\s*(.*);?/i', $v, $match) )
-	            	$db['EmailType'] = $match[1];
-	            elseif ( preg_match('/charset="(.+?)"/i', $v, $match) )
-	            	$db['Charset'] = $match[1];
-	            elseif ( preg_match('/boundary="(.*)"/i', $v, $match) )
-	            	$db['EmailBoundary']  = $match[1];
-	            elseif ( preg_match('/^Message-ID:\s*(.*)/i', $v, $match) )
-	            	$db['EmailID'] = $match[1];
-				elseif (preg_match('/^(X-Priority:\s*1|X-MSMail-Priority:\s*High|Importance:\s*High)/i', $v))
-					$db['Priority'] = '1' ;
-				elseif (preg_match('/^Reply-To:\s*(.*)/i', $v, $match))
-					$db['ReplyTo'] = $match[1];
-	        //}
-	        //var_dump($v);
-
-			if ($v == '' || $v == '=20')
-			{
-				//$head = true;
+		}
+		
+	    foreach ($headers as $v) {
+	    
+			if (trim($v) == '' || trim($v) == '=20') {
 				break;
 			}
 
-			//if ( $head && !$nomsg )
-				//$db['EmailMsg'] .= $v;
+		    if ( preg_match('/^([a-z0-9]+([\-a-z0-9])*):\s*(.*)/i', $v, $match) ) {
+		    	$key = $match[1];
+		    	$tmp[$key] = $match[3];
+		   	} elseif ( preg_match('/charset="(.+?)"/i', $v, $match) ) {
+	            $key = 'Charset';
+	        	$db['Charset'] = $match[1];
+	        } elseif ( preg_match('/boundary="(.+?)"/i', $v, $match) ) {
+	            $key = 'EmailBoundary';
+	        	$db['EmailBoundary']  = $match[1];
+	        } elseif (!empty($key) && preg_match('/^(\s+.+)/', $v, $match)) {
+			    $tmp[$key] .= $match[1];
+	        }
 	    }
-
+	    
+    	$db['EmailDate']    = is_null($tmp['Date'])? '' : $tmp['Date'];
+		$db['EmailSubject'] = is_null($tmp['Subject'])? '' : $tmp['Subject'];
+		$db['EmailUIDL']    = is_null($tmp['X-UIDL'])? '' : $tmp['X-UIDL'];
+		$db['EmailFrom']    = is_null($tmp['From'])? '' : $tmp['From'];
+		$db['EmailTo']      = is_null($tmp['To'])? '' : $tmp['To'];
+		$db['EmailType']    = is_null($tmp['Content-Type'])? '' : $tmp['Content-Type'];
+		$db['EmailID']      = is_null($tmp['Message-ID'])? '' : $tmp['Message-ID'];
+		$db['ReplyTo']      = is_null($tmp['Reply-To'])? '' : $tmp['Reply-To'];
+		
+		if ( (isset($tmp['X-Priority']) && $tmp['X-Priority'] == 1) || 
+		     (isset($tmp['X-MSMail-Priority']) && strtolower($tmp['X-MSMail-Priority']) == "high") || 
+		     (isset($tmp['Importance']) && strtolower($tmp['Importance']) == "high") ) {
+		     
+			$db['Priority'] = '1';
+		}
+			
 		$db = $this->quotemessage($db);
 
 	    $db['id'] = $id ? $id : '';
@@ -2517,6 +2540,7 @@ password for the account. Server returned ( $error )";
 		global $pref;
 
 		if (!$pref['datetime'] || !$this->TimeZone) {
+		    $newdate = preg_replace('/UT$/', 'UTC', $newdate);
 		    $newdate = date("D, j M Y G:i O", strtotime($newdate));
 		    return $newdate;
 		}

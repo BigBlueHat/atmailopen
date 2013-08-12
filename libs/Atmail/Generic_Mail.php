@@ -1,5 +1,12 @@
 <?php
-
+// +----------------------------------------------------------------+
+// | Generic_Mail.php  													|
+// +----------------------------------------------------------------+
+// | AtMail Open - Licensed under the Apache 2.0 Open-source License|
+// | http://opensource.org/licenses/apache2.0.php                   |
+// +----------------------------------------------------------------+
+// | Date: Febuary 2005												|
+// +----------------------------------------------------------------+
 require_once('header.php');
 
 //error constants
@@ -134,13 +141,20 @@ class Generic_Mail
 	 */
 	function Generic_Mail($host, $protocol, $timeout=60, $SSL=false)
 	{
-		global $pref;
+		global $pref, $atmail;
 
 		$this->use_SSL = $SSL;
 		$this->errors = array();
 		$protocol = strtoupper($protocol);
 		$this->debug = $pref['popimap_debug'];
 		$this->debugLogFile = $pref['popimap_debug_file'];
+                $hosts = array($host);
+		
+                $args = array();
+                $atmail->pluginHandler->triggerEvent('preMailServerConnect', $args);
+                if (isset($args[0])) {
+                    $hosts = $args[0];
+                } 
 
 		// Temporarily disable php imap funcs
 		if (false)//(function_exists('imap_open') && $pref['imap_functions'] == 'php')
@@ -171,7 +185,11 @@ class Generic_Mail
 				//	$conn = $this->catchDebugging('connect', array($host));
 				//else
 				ob_start();
-				$conn = $this->mailer->connect($host, $this->port);
+				foreach ($hosts as $host) {
+					if($conn = $this->mailer->connect($host, $this->port))
+						break;
+				}
+					
 				ob_end_clean();
 	
 				if (!$conn)
@@ -191,9 +209,18 @@ class Generic_Mail
 				
 				// set debugging output
 				$this->mailer->setDebug($pref['popimap_debug'], $pref['popimap_debug_file'], $pref['popimap_debug_file_size_limit']);
+				
+				$connect = false;
+				foreach ($hosts as $host) {
+					if ($this->mailer->connect($host, $this->port, $timeout, $SSL)) {
+						$connect = true;
+						break;
+					}
+				}
 
-				if (!$this->mailer->connect($host, $this->port, $timeout, $SSL))
+				if (!$connect) {
 					$this->errors[] = "-ERR Connection to IMAP server failed";
+				}
 			}
 		}
 

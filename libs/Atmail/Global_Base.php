@@ -45,7 +45,7 @@ require_once('Auth.php');
 require_once('Filter.class.php');
 require_once('PluginHandler.php');
 
-            
+
 // Disable iconv if not available
 $pref['iconv'] = extension_loaded('iconv');
 
@@ -176,8 +176,8 @@ if (!function_exists('file_put_contents')) {
         return $bytes;
     }
 }
-  
- 
+
+
 /**
  * Checks for magic_quotes_gpc = On and strips them from incoming
  * requests if necessary
@@ -185,7 +185,7 @@ if (!function_exists('file_put_contents')) {
 if (get_magic_quotes_gpc()) {
  $_GET = array_map('stripslashes', $_GET);
  $_POST = array_map('stripslashes', $_POST);
- $_COOKIE = array_map('stripslashes', $_COOKIE); 
+ $_COOKIE = array_map('stripslashes', $_COOKIE);
 }
 
 
@@ -201,7 +201,7 @@ class Global_Base {
 	function Global_Base()
 	{
 		global $pref;
-		
+
 		$this->db = new SQL();
 
 		$path = (dirname(dirname(dirname(__FILE__))));
@@ -229,7 +229,7 @@ class Global_Base {
 			$this->auth = new Auth();
 			return $return ? $this->auth : null;
 		}
-		
+
 		if (isset($_SESSION['auth']))
 	    	$this->auth =& $_SESSION['auth'];
 	    else
@@ -249,7 +249,7 @@ class Global_Base {
 
 	    $args = array(&$file, &$var);
 	    $this->pluginHandler->triggerEvent('beginParse', $args);
-	    
+
 	    // Just in case the user is requesting a file out of our directory limit
 	    if (strpos($file, '../') !== false)
 		{
@@ -338,7 +338,7 @@ class Global_Base {
 
 		$args = array(&$page);
 		$this->pluginHandler->triggerEvent('endParse', $args);
-		
+
 	    return $page;
 	}
 
@@ -364,21 +364,21 @@ class Global_Base {
 	        $this->log->write_log( 'Error', "XSS Alert : {$_SERVER['SCRIPT_NAME']} : $string" );
 	        catcherror( "Security Alert: IP address {$_SERVER['REMOTE_ADDR']} logged - XSS Attack detected" );
 		}
-	
+
 		if ($extended) {
 			// Escape <> chars
 			$string = str_replace('<', '&lt;', $string);
 			$string = str_replace('>', '&gt;', $string);
-	
+
 			// Change () to the Hex vlaues
 			$string = str_replace('(', '&#40', $string);
 			$string = str_replace(')', '&#41', $string);
-	
+
 			// Change # , & to the Hex values
 			$string = str_replace('#', '&#35', $string);
 			$string = str_replace('&', '&#38', $string);
 		}
-		
+
 		return $string;
 	}
 
@@ -447,11 +447,13 @@ class Global_Base {
 			if( !$pref['allow_Calendar']) $h['MenuPullNewHeight'] -= 43 ;
 			if (!$pref['allow_SMS']) $h['MenuPullNewHeight'] -= 22 ;
 
-			$h['MenuPullPreferencesHeight'] = 98;
+            $h['MenuPullPreferencesHeight'] = 110;
+            
 			if (!$domains[$this->pop3host] || !$pref['allow_Passutil'] ) $h['MenuPullPreferencesHeight'] -= - 22 ;
 
 			$h['MenuPullMessageHeight'] = 169;
 			if (!$pref['allow_SpamSettings']) $h['MenuPullMessageHeight'] -= 30 ;
+			
 		}
 
 		if ( $filename == "html/$this->Language/xp/toolbar_abook.html" )
@@ -480,11 +482,11 @@ class Global_Base {
 		if (function_exists('mb_substr')) {
 			return mb_substr($string, $start, $length);
 		}
-		
+
 		return substr($string, $start, $length);
 	}
-	
-	
+
+
 	function end()
 	{
         $args = array();
@@ -492,7 +494,7 @@ class Global_Base {
 		exit;
 	}
 
-	
+
 	function writeConfig()
 	{
 		// catch any plugins that write alternate configs
@@ -502,9 +504,12 @@ class Global_Base {
 		if ($return) {
 			return;
 		}
-		
+
 		writeconf();
 	}
+	
+	function debug($string)
+	{
+	    file_put_contents('php://stderr', "$string\n");
+	}
 }
-
-?>

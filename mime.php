@@ -154,8 +154,7 @@ $tmpfile = $pref['user_dir'] . "/tmp/" . $atmail->auth->get_account() . "/" . $v
 if (!$var['src']) die("Not implemented");
 
 $size = filesize($tmpfile);
-$name = $_REQUEST['name'];
-$name = $atmail->myunescape($_REQUEST['name']);
+$name = rawurldecode($_REQUEST['name']);
 
 if (!$name)
 	$name = $var['src'];
@@ -167,11 +166,6 @@ $var['type'] = $mime[$var['ext']];
 if ( !$var['type'] )
 	$mime[$var['ext']] = "unknown/data";
 
-// Take off the extension
-//$name = str_replace(".{$var['ext']}", '', $name);
-//$name = urlencode($name);
-//$name = $name . ".{$var['ext']}";
-
 // If the filename is too long, cut it to a size the HTTP header can read!
 if (strlen($name) > 182)
 {
@@ -181,13 +175,19 @@ if (strlen($name) > 182)
 
 $name = str_replace(array("\r", "\n"), '', $name);
 
+if (strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
+    $encName = rawurlencode($name);
+} else {
+    $encName = $name;    
+}
+
 if ($var['ext'] == "html")
 	$atmail->httpheaders();
 else
 {
-	header("Content-Type: ".$mime[$var['ext']]);
+	header("Content-Type: ".$mime[$var['ext']] . ";");
 	header("Content-Length: $size");
-	header("Content-Disposition: attachment; filename=\"$name\"; charset=\"utf-8\"");
+	header("Content-Disposition: attachment; filename=\"$encName\"; charset=\"UTF-8\"");
 	header("Pragma: ");
 }
 

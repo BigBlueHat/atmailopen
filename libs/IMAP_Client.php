@@ -5,7 +5,7 @@
  * IMAP Client class. Can be used instead of PHP's
  * imap functions to communicate with an IMAP server
  *
- * @author Brad Kowalczyk <brad@staff.atmail.com>
+ * @author Brad Kowalczyk <brad@ibiscode.com>
  * @version 1.0
  * @package IMAP_Client
  */
@@ -178,6 +178,7 @@ class IMAP_Client
 			return false;
 		}
 
+		$pass = str_replace('"', '\"', $pass);
 		$resp = $this->sendCmd("LOGIN \"$user\" \"$pass\"");
 
 		if (!$resp)
@@ -188,7 +189,7 @@ class IMAP_Client
 		$this->loggedIn = true;
 
 		// Load the folder namespace
-		$this->namespace();
+		$this->getImapNamespace();
 
 		return true;
 	}
@@ -223,7 +224,12 @@ class IMAP_Client
 
 	function authenticateCRAMMD5()
 	{
-
+		if (!$resp = $this->sendCmd('AUTHENTICATE CRAM-MD5')) {
+			return false;
+		}
+		
+		$challenge = base64_decode($resp);
+		file_put_contents('php://stderr', "challenge = $challenge\n");
 	}
 
 
@@ -288,14 +294,12 @@ class IMAP_Client
 	{
 		global $pref;
 
-		if (!$this->loggedIn)
-		{
+		if (!$this->loggedIn) {
 			$this->lastError = IC_NOT_LOGGED_IN;
 			return false;
 		}
 
-		if ($mailbox)
-		{
+		if ($mailbox) {
 			if (!$this->select($mailbox))
 				return false;
 		}
@@ -316,7 +320,7 @@ class IMAP_Client
 		// NB: we ignore the 'id' (ARRIVAL) sort as simply using the
 		// msg sequence ids is faster as we can skip issuing the SORT
 		// command and processing its response.
-		if ( $var['sort'] !== 'id' && ($pref['imap_sort_extension']) && ($this->hasCapability('SORT')) ) {
+		if ( $var['sort'] !== 'id' && $this->hasCapability('SORT') ) {
 
 			global $var;
 
@@ -383,6 +387,9 @@ class IMAP_Client
 
 		$summary = $this->_processMessageSummaries($msgs);
 
+        // sort the msgs for imap servers that don't return
+        // msgs in the order they were specified in the FETCH command
+        //$summary = $this->_sortMessages($summary, $server_sort_array);
 		return $summary;
 	}
 
@@ -448,6 +455,23 @@ class IMAP_Client
 	}
 
 
+    function _sortMessages($msgs, $order)
+    {
+        $sortedMessages = array();
+        foreach ($order as $uid) {
+        echo "\n$uid: ";
+            foreach ($msgs as $m) {
+            	echo "{$m['UID']}, ";
+                if ($m['UID'] == $uid) {
+                    $sortedMessages[] = $m;
+                    break;    
+                }    
+            }    
+        }
+        return $sortedMessages;
+    }
+    
+    
 	/**
 	 * List mailboxes according to reference and mailbox name
 	 *
@@ -574,7 +598,7 @@ class IMAP_Client
 	/**
 	 * Sends the NAMESPACE command and parses the response
 	 */
-	function namespace()
+	function getImapNamespace()
 	{
 
 		if (!$this->loggedIn)
@@ -616,7 +640,7 @@ class IMAP_Client
 
         // Double check
         if ($this->Prefix == '' && !$this->select('Trash') && $this->select('INBOX.Trash')) {
-            $this->Prefix = 'INBOX.';
+            $this->Prefix = 'INBOX';
             $this->Deliminator = '.';
         }
 

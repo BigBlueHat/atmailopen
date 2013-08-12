@@ -4,7 +4,7 @@ to any completed step by clicking on its box in the progress bar.</p>
 
 <p>For assistance during installation please consult the following guides:</P>
 <ul>
-<li class='dl'><a href="http://atmail.com/docs/php/webmail-install.html" target="_blank">Installation Documentation</a> - Guide for installing the Webmail client of Atmail
+<li class='dl'><a href="http://www.atmail.com/support/index.php/Atmail5WebmailInstall/ClientInstallation?id=installation:webmail_client_installation" target="_blank">Installation Documentation</a> - Guide for installing the Webmail client of Atmail
 </li>
 <li class='dl'> <a href="http://kb.atmail.com/" target="_blank">Knowledge Base</a> - Hints and tips for installing and maintaining Atmail.
 </li>
@@ -24,23 +24,6 @@ to any completed step by clicking on its box in the progress bar.</p>
 	<h2>Required PHP Extensions</h2>
 	<p>Atmail requires the following PHP extensions to function. Please
 	install them and continue Atmail installation.</p>
-
-	<?php if($var['error'] == '1' && in_array('enable_dl', $var['ini']) && $var['version'] == 'demo' && in_array('ioncube', $var['req'])): ?>
-	<div class="error">
-		<h3>Dependency Check failed</h3>
-				<p>IonCube Loader not detected &amp; no dynamic load support. This extension is required to run the compiled demo of Atmail. The full version includes the complete source-code and this step is not required. To proceed with the installation of Atmail you must enable dynamic_load support or load the Ioncube extension for your platform.
-<br/><br/>
-<b>Option 1</b>: Load Ioncube extension (better performance) - Edit <?php echo $var['php_ini_path'] ?> and add the lines :<br />
-        <br />
-        zend_extension= <?php echo $var['ioncube_lib'] ?></p>
-<p><b>Option 2:</b> Enable dynamic_load support - Edit <?php echo $var['php_ini_path'] ?> and define:<br/><br/>
-
-	enable_dl = On
-	</p>
-
-		<p>To proceed with the installation of Atmail you must choose a method above, restart Apache, then reload the page to proceed. Review the <a href="http://atmail.com/docs/php/webmail-install.html" target="_blank">installation manual</a> for further details.</p>
-	</div>
-	<?php endif; ?>
 
 	<?php if($var['error'] == '1' && in_array('safe_mode', $var['req'])): ?>
 	<div class="error" id="safemode">
@@ -104,21 +87,6 @@ to any completed step by clicking on its box in the progress bar.</p>
 	
 	<?php if(!in_array('sqlite', $var['opt'])): ?>
 	<li class='installed'>Installed - SQLite Extension</a>
-	</li>
-	<?php endif; ?>
-	
-	<?php if(in_array('ioncube', $var['req']) && $var['version'] == 'demo'): ?>
-	<li class='required'>Required - ionCube Loader - <a href="info.php" target="_blank">View php info()</a>
-	</li>
-	<?php endif; ?>
-
-	<?php if($var['ionext'] == '1'): ?>
-	<li class='installed'>Installed - ionCube Extension Loader</a>
-	</li>
-	<?php endif; ?>
-
-	<?php if(!in_array('ioncube', $var['req']) && $var['version'] == 'demo' && !in_array('enable_dl', $var['ini']) ): ?>
-	<li class='installed'>Installed - ionCube Dynamic Loader</a>
 	</li>
 	<?php endif; ?>
 
@@ -230,11 +198,6 @@ to any completed step by clicking on its box in the progress bar.</p>
 	<li class='installed'>Maximum Size of POST data, recommended 16M or higher - Recommended max post size for attachments</li>
 	<?php endif; ?>
 
-    <?php if (in_array('enable_dl', $var['ini']) && preg_match('/demo/i', $pref['version'])): ?>
-	<li class='optional'>enable_dl - Loads a PHP extension at runtime, recommended <b>ON</b>, current value OFF - Required for ionCube Run-Time load <a href="info.php" target="_blank">View php info()</a></li>
-	<?php elseif (preg_match('/demo/i', $pref['version'])): ?>
-	<li class='installed'>enable_dl - Loads a PHP extension at runtime, recommended ON - Required for ionCube Run-Time load</li>
-	<?php endif; ?>
     </ul>
 
     <br />

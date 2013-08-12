@@ -41,29 +41,25 @@ $atmail->httpheaders();
 $atmail->loadprefs();
 
 // Parse the users custom stylesheet
-
 $var['atmailstyle'] = $atmail->parse("html/$atmail->Language/$atmail->LoginType/atmailstyle.css" );
 $var['mailstyle'] = $atmail->parse("html/$atmail->Language/$atmail->LoginType/atmailstyle-mail.css");
-
-$var['folder']    = $atmail->escape_html( urldecode($_REQUEST['Folder']), false );
+$var['folder']    = $atmail->escape_html($_REQUEST['Folder'], false );
 $var['newfolder'] = $atmail->escape_html( urldecode($_REQUEST['NewFolder']), false );
 
 $var['acc'] = $acc;
 
-if ($_REQUEST['sort'])
+if ($_REQUEST['sort']) {
 	$var['sort'] = $_REQUEST['sort'];
-elseif ($atmail->MboxOrder)
+} elseif ($atmail->MboxOrder) {
 	$var['sort'] = $atmail->MboxOrder;
-else
+} else {
 	$var['sort'] = 'id';
+}
 
-$var['order']     = ($_REQUEST['order'])? $_REQUEST['order'] : '';
-$var['order'] = Filter::stringMatch($var['order'], array('desc', 'asc'));
-
-$var['flag']      = $_REQUEST['Flag'];
-
-$var['XML']		  = $_REQUEST['XML'];
-
+$var['order']  = ($_REQUEST['order'])? $_REQUEST['order'] : '';
+$var['order']  = Filter::stringMatch($var['order'], array('desc', 'asc'));
+$var['flag']   = $_REQUEST['Flag'];
+$var['XML']	   = $_REQUEST['XML'];
 $var['suffix'] = '_ajax';
 
 // Make sure we are ordering the query with an allowed field
@@ -76,12 +72,13 @@ if ( $var['sort'] != "EmailFrom" && $var['sort'] != "EmailTo"
 
 // Load an array of msgs selected to be moved
 $msgs = $_REQUEST['id'];
-if (!is_array($msgs))
+if (!is_array($msgs)) {
 	settype($msgs, 'array');
+}
 
-if (isset($_REQUEST['msgmove']))
+if (isset($_REQUEST['msgmove'])) {
 	$msgmove = $_REQUEST['msgmove'];
-
+}
 
 $mail = new GetMail(array(
 	'Username' => $atmail->username,
@@ -94,8 +91,7 @@ $mail = new GetMail(array(
 $status = $mail->login();
 
 // We have an error while logging in. Tell the user
-if ($status)
-{
+if ($status) {
     print $atmail->parse( "html/$atmail->Language/auth_misc.html", array('status' => "Remote mail-server not responding - Check connection - $status"));
     $mail->quit();
     $atmail->end();
@@ -103,6 +99,11 @@ if ($status)
 
 // Receive the list of mailbox folders
 $folders = GetMail::_sort_folders($mail->listfolders());
+
+// Make sure the requested folder exists (help avoid XSS etc)
+if (!empty($var['folder']) && !in_array($var['folder'], $folders)) {
+    die("requested folder does not exist");
+}
 
 $fol = array();
 
@@ -114,13 +115,15 @@ $var['folderbox'] = $mail->folder_select_lang( $var['folderbox'], $atmail->Langu
 $var['folderbox'] = str_replace("value=\"Trash\"", "value=\"Trash\" selected", $var['folderbox']);
 
 // If the user has set the messages to another flag; update the UIDL database.
-if ( $var['flag'] && $msgs[0] )
-{
-    foreach ($msgs as $id)
-    {
+if ( $var['flag'] && $msgs[0] ) {
+
+	$c=0;
+    foreach ($msgs as $id) {
+		$folder = urldecode($_REQUEST['folders'][$c]);
         // Load a hash containing the message headers
-        $db = $mail->gethead( $id, $var['folder'], 5 );
-		$mail->updateuidl( $db['EmailUIDL'], $var['flag'], '1', $var['folder'], $id );
+        $db = $mail->gethead( $id, $folder, 5 );
+		$mail->updateuidl( $db['EmailUIDL'], $var['flag'], '1', $folder, $id );
+		$c++;
     }
 
 
@@ -144,30 +147,34 @@ elseif ( $msgs && $var['newfolder'] )
 
 	$count = 0;
 	$cnt = 0;
-
-    foreach ($msgs as $id)
-    {
-		if (strpos($id, '::') !== false)
-		{
+    $var['moved_status'] = true;
+    
+    foreach ($msgs as $id) {
+		if (strpos($id, '::') !== false) {
 			$tmp = explode('::', $id);
-			//$var['folder'] = $tmp[1];
+			$var['folder'] = $tmp[1];
 			$arr[0] = $tmp[0];
-			//$arr[1] = $tmp[2];
-		}
-		else
+			$arr[1] = $tmp[2];
+		} else {
 			$arr = explode(":", $id);
+		}
 
 		$cnt++;
 
-		if($arr[1] && !$count)
-		{
+		if($arr[1] && !$count) {
 			// Move the selected message, but first check the sequence number/uidl matches the message header
-        	$mail->move($arr[0], $var['folder'], $var['newfolder'], $atmail->AutoTrash, $arr[1]);
-		}
-		else
-		{
+        	if ($mail->move($arr[0], $var['folder'], $var['newfolder'], $atmail->AutoTrash, $arr[1]) === false) {
+        	    $var['moved_status'] = false;    
+        	} else {
+        	    $cnt++;    
+        	}
+		} else {
 			// Move the selected message
-        	$mail->move( $arr[0], $var['folder'], $var['newfolder'], $atmail->AutoTrash );
+        	if ($mail->move( $arr[0], $var['folder'], $var['newfolder'], $atmail->AutoTrash ) === false) {
+        	    $var['moved_status'] = false;    
+        	} else {
+        	    $cnt++;    
+        	}
 		}
 
 		$uniqueid = $arr[0];
@@ -179,17 +186,12 @@ elseif ( $msgs && $var['newfolder'] )
 	}
 
 	// If this is an Ajax call, print the header, then exit
-	if ($atmail->Ajax && $var['newfolder'] )
-	{
-		$var['folder'] = str_replace('&', '&amp;', $var['folder']);
-		print <<<EOF
-<?xml version="1.0" ?>
-<MovedMsgs>
-<status>1</status>
-<message>Deleted messages from {$var['folder']}</message>
-</MovedMsgs>
-EOF;
-
+	if ($atmail->Ajax && $var['newfolder'] ) {
+	    if ($var['moved_status'] === false) {
+		    echo $atmail->parse("html/$atmail->Language/msg/move_msg_fail.xml");
+	    } else {
+		    echo $atmail->parse("html/$atmail->Language/msg/move_msg_ok.xml");
+	    }
 		// Exit our mail session, avoid mailbox lock
 		$mail->quit();
 		$atmail->end();
@@ -217,8 +219,7 @@ list($var['unread'], $var['total']) = $mail->showunread($var['folder']);
 $var['fulltotal'] = $var['total'];
 
 // Create the sideframe for the Simple interface containing the list of mailbox folders.
-if ( $atmail->LoginType == "simple" )
-{
+if ( $atmail->LoginType == "simple" ) {
 	// Toggle our sort opposite if the user clicks the header again
 	$var['ordersort'] = ( $var['order'] == "desc" ) ? "" : "desc";
 
@@ -227,13 +228,11 @@ if ( $atmail->LoginType == "simple" )
 
 
 	// Create the default folders on the left sidebar
-	foreach (array('Inbox', 'Trash', 'Sent', 'Drafts', 'Spam') as $fol)
-	{
+	foreach (array('Inbox', 'Trash', 'Sent', 'Drafts', 'Spam') as $fol) {
 		$foldertranslate = Language::folder_language($fol, $atmail->Language, '1');
 
 		// If we are the currently selected folder
-		if ($fol == $var['folder'])
-		{
+		if ($fol == $var['folder']) {
 			$folicon = "sidebar_" . strtolower($fol) . "_on.gif";
 			$count = 'count' . $var['folder'];
 			if ($var[$count] > 0)
@@ -262,21 +261,18 @@ if ( $atmail->LoginType == "simple" )
 </tr>
 _EOF;
 
-			if ($atmail->Ajax)
-			{
+			if ($atmail->Ajax) {
 				$icon = strtolower($fol);
 				$counter = str_replace(array('(', ')'), '', $counter);
 				$var['folders_default_ajax'] .= <<<_EOF
 <Fol Name="$fol" Display="$foldertranslate" Count="$counter" Icon="$icon" State=""></Fol>
-
 _EOF;
 
 			}
 
 		}
 		// Otherwise the default folder view (unselected)
-		else
-		{
+		else {
 			$folicon = "sidebar_" . strtolower($fol) . "_off.gif";
 
 			$var['folders_default'] .= <<<_EOF
@@ -299,12 +295,10 @@ _EOF;
 </tr>
 _EOF;
 
-			if ($atmail->Ajax)
-			{
+			if ($atmail->Ajax) {
 				$icon = strtolower($fol);
 				$var['folders_default_ajax'] .= <<<_EOF
 <Fol Name="$fol" Display="$foldertranslate" Count="" Icon="$icon" State=""></Fol>
-
 _EOF;
 			}
 		}
@@ -312,12 +306,9 @@ _EOF;
 
 	$var['folders_default_ajax'] .= <<<EOF
 <Fol Name="erase" Display="Erase" Count="" Icon="erase" State=""></Fol>
-
 EOF;
 
-	foreach ($folders as $folder)
-    {
-		//array_push($fol, $folder);
+	foreach ($folders as $folder) {
 
 		 if ( $folder == "Inbox" || $folder == "Trash" || $folder == "Sent" || $folder == "Drafts" || $folder == "Spam" )
 			continue;
@@ -333,27 +324,24 @@ EOF;
             $folderlink = $folder;
 
 		// Determine if we are the selected folder
-		if	($folder == $var['folder'])
-		{
+		if	($folder == $var['folder']) {
 			$on = 1;
 			$var['foldericon'] = 'sidebar_folder_on.gif';
-		}
-		else
-		{
+		} else {
 			$on = 0;
 			$var['foldericon'] = 'sidebar_folder_off.gif';
 		}
 
-		if ($atmail->Ajax)
-		{
-		$folder = str_replace('&', '&amp;', $folder);
+		if ($atmail->Ajax) {
+
+		    $folder = str_replace('&', '&amp;', $folder);
 			$var['folders_default_ajax'] .= <<<EOF
 <Fol Name="$folder" Display="$folder" Count="" Icon="folder" State=""></Fol>
-
 EOF;
+		} else {
+			$var['folders'] .= $atmail->parse( "html/$atmail->Language/simple/folderbar.html", array('folderlink' => urlencode($folderlink), 'folder' => $folder, 'unread' => $subfolderunread, 'read' => $read, 'on' => $on, 'foldericon' => 
+$var['foldericon']) );
 		}
-		else
-			$var['folders'] .= $atmail->parse( "html/$atmail->Language/simple/folderbar.html", array('folderlink' => $folderlink, 'folder' => $folder, 'unread' => $subfolderunread, 'read' => $read, 'on' => $on, 'foldericon' => $var['foldericon']) );
     }
 }
 
@@ -366,8 +354,7 @@ $var['Unreadscript'] .= "parent.FolderState[escape(\"{$folderstate}_fstatus\")] 
 
 // If the user has selected to 'jump' between messages
 // e.g next, prev, start, end
-if ( $_REQUEST['jump'] )
-{
+if ( $_REQUEST['jump'] ) {
     $type    = $_REQUEST['jump'];
     $current = $_REQUEST['msgid'];
 
@@ -379,11 +366,9 @@ if ( $_REQUEST['jump'] )
     	die('ERROR');
 
 	$i = 0;
-	foreach ($msgids as $id)
-	{
+	foreach ($msgids as $id) {
         // Find the array index, depending on our current msgID
-        if ( $current == $id )
-		{
+        if ( $current == $id ) {
             $num = $i;
 			break;
         }
@@ -405,9 +390,9 @@ if ( $_REQUEST['jump'] )
     if ( !$msgids[$num] )
 		$num = 0;
 
-	$cnt = count($msgids);
+		$cnt = count($msgids);
 
-	$mail->quit();
+    	$mail->quit();
 
     print "<html><head></head><body><script>location.href='reademail.php?id={$msgids[$num]}&folder={$var['folder']}&newwin=$newwin';</script></body></html>";
 
@@ -417,8 +402,7 @@ if ( $_REQUEST['jump'] )
 
 $var['prevtotal'] = $_REQUEST['prevtotal'];
 
-if ($var['prevtotal'] && $var['total'] > $var['prevtotal'] )
-{
+if ($var['prevtotal'] && $var['total'] > $var['prevtotal'] ) {
 	$var['newmailalert'] = "<EMBED src='javascript/newmail.wav' width=0 height=0 autostart=true loop=false>
                      <script language='Javascript'>this.window.focus();</script>";
 }
@@ -477,30 +461,26 @@ print $atmail->parse("html/$atmail->Language/simple/showmail_popup{$var['suffix'
 $moved = array();
 
 // List messages from the newest to oldest
-if(is_array($msgmove))
-{
-    foreach($msgmove as $match)
-    {
-        if (preg_match('/(.*?):(\d+)/', $match, $matches = array()))
-        {
+if(is_array($msgmove)) {
+    foreach($msgmove as $match) {
+        if (preg_match('/(.*?):(\d+)/', $match, $matches = array())) {
             $folder = $matches[1];
             $id = $matches[2];
         }
 
         if(!$folder || !$id)
-        continue;
+            continue;
 
         array_push($moved, $match);
 
         // Disable the message popup for simple and XUL interfaces
         if ($atmail->LoginType == "simple" || $atmail->XUL)
-        $atmail->Advanced = "";
+            $atmail->Advanced = "";
 
         // Default to the normal message font when displaying a message
         $match['msgclass'] = "itemi";
 
-        if ( $user['Advanced'] )
-        {
+        if ( $user['Advanced'] ) {
             // Take away any references to ' and " characters. They break the Jscript for the popup
             $match['EmailSubject'] = str_replace(array("'", '"', "\n", "\r"), '', $match['EmailSubject']);
         }
@@ -518,14 +498,13 @@ if(is_array($msgmove))
 
         // Default style for the simple interface
         if ($atmail->LoginType == "simple")
-        $var['style'] = "_popup";
+            $var['style'] = "_popup";
 
         // Display the matched messages
         $match = array_merge($match, array('msgnum' => $match['id'], 'count' => $var['count']));
         print $atmail->parse("html/$atmail->Language/$atmail->LoginType/emailentry{$var['style']}{$var['suffix']}.html", $match);
     }
 }
-
 $var['start'] = $_REQUEST['start'];
 
 $messages = array();
@@ -544,8 +523,7 @@ if ($var['start'] - $atmail->MsgNum >= 0)
 if ($var['start'] + $atmail->MsgNum < $var['fulltotal'] )
 	$next_offset = $var['start'] + $atmail->MsgNum;
 
-if (isset($previous_offset))
-{
+if (isset($previous_offset)) {
 
 	$var['next'] = <<<_EOF
 <a href="showmail.php?start=$previous_offset&Folder={$var['folder']}&sort={$var['sort']}&order={$var['order']}">
@@ -559,8 +537,7 @@ _EOF;
 
 }
 
-if (isset($next_offset))
-{
+if (isset($next_offset)) {
 
 	$var['prev'] = <<<_EOF
 <a href="showmail.php?start=$next_offset&Folder={$var['folder']}&sort={$var['sort']}&order={$var['order']}">
@@ -574,8 +551,7 @@ _EOF;
 
 }
 
-if ($var['next'] || $var['prev'])
-{
+if ($var['next'] || $var['prev']) {
 	$pages = $var['fulltotal'] / $atmail->MsgNum;
 	if (is_float($pages))
 		$pages = intval($pages) + 1;
@@ -583,8 +559,7 @@ if ($var['next'] || $var['prev'])
 	$start = 1;
 
 	// Find our current page
-	for ($page=1; $page <= $pages; $page++ )
-	{
+	for ($page=1; $page <= $pages; $page++ ) {
 		$jump = ( $page - 1 ) * $atmail->MsgNum;
 		if ($jump < 1)
 			$jump = "1";
@@ -595,31 +570,26 @@ if ($var['next'] || $var['prev'])
 
 	$newpages = $start + 7;
 
-	if ($newpages < $pages)
-	{
+	if ($newpages < $pages) {
 		$pages = $newpages;
 		$extra = $var['fulltotal'] / $atmail->MsgNum;
 		if (is_float($extra))
 			$extra = intval($extra) + 1;
-	}
-	else
-	{
+	} else {
 		$diff = $pages - 7;
 		$start = $diff;
 	}
 
 	if ($start < 0) $start = 1;
 
-	if ($start != 1)
-	{
+	if ($start != 1) {
 		$var['jumppage'] = "<option value='start=&Folder={$var['folder']}&sort={$var['sort']}&order={$var['order']}'>First Page 1</option><option value='' style='color: gray;'>----------</option>";
 	}
 
 	if (!$_REQUEST['start'] )
 		$start = $pages - 7;
 
-	for ($i = $start; $i <= $pages; $i++ )
-	{
+	for ($i = $start; $i <= $pages; $i++ ) {
 		if ($i <= 0) continue;
 
 		$jump = ($i - 1) * $atmail->MsgNum;
@@ -627,19 +597,16 @@ if ($var['next'] || $var['prev'])
 		if ($jump == 1 && $i < $pages)
 			$jump = 2;
 
-		if ($var['start'] == $jump)
-		{
+		if ($var['start'] == $jump) {
 			$var['jumppage'] .= "<font class='swbold' color='blue'><b>$i</b></font></a>,&nbsp;";
 			$var['jumppage'] .= "<option value='' style='color: gray;' selected>Page $i</option>";
-		}
-		else
+		} else {
 			$var['jumppage'] .= "<option value='start=$jump&Folder={$var['folder']}&sort={$var['sort']}&order={$var['order']}'>Page $i</option>";
+		}
 	}
 
-	if ($extra)
-	{
+	if ($extra) {
 		$id = ($extra -1) * $atmail->MsgNum;
-
 		$var['jumppage'] .= "<option value='' style='color: gray;'>----------</option><option value='start=$id&Folder={$var['folder']}&sort={$var['sort']}&order={$var['order']}'>Last Page $extra</option>";
 	}
 }
@@ -647,8 +614,7 @@ if ($var['next'] || $var['prev'])
 $total = $var['fulltotal'];
 
 // Calculate the number of pages
-if ($var['msg_pos'] == 1)
-{
+if ($var['msg_pos'] == 1) {
 	$pages = ceil($var['fulltotal'] / $atmail->MsgNum);
 
 	$num = $pages * $atmail->MsgNum;
@@ -697,8 +663,7 @@ $i = 1;
 $cacheIDs = array();
 
 //Build message list
-foreach ($emails as $email)
-{
+foreach ($emails as $email) {
 	// Disable the message popup for external accounts
 	if ($atmail->LoginType == 'simple' || $atmail->LoginType == 'xul' || $atmail->Ajax)
 		$atmail->Advanced = '';
@@ -740,8 +705,7 @@ foreach ($emails as $email)
 	if(!$email['msgclass'])
 		$email['msgclass'] = "item";
 
-    if ( $user['Advanced'] )
-    {
+    if ( $user['Advanced'] ) {
 		// Take away any references to ' and " characters. They break the Jscript for the popup
         $email['EmailSubject'] = str_replace(array("'", '"', "\n", "\r"), '', $email['EmailSubject']);
     }
@@ -756,8 +720,7 @@ foreach ($emails as $email)
     $email = $mail->clean_header(array_merge($email, array('TimeZone' => $atmail->TimeZone, 'LoginType' => $atmail->LoginType, 'Ajax' => $atmail->Ajax)));
 
 	// If we are using the Ajax interface convert &'s to <>
-	if ($atmail->Ajax || $atmail->XUL)
-	{
+	if ($atmail->Ajax || $atmail->XUL) {
 		list($email['EmailSubject'], $email['EmailFrom'], $email['EmailTo'], $email['ReplyTo']) = str_replace( array('&gt;', '&lt;', ']]>', "\x04"), array('>', '<', '', ''), array($email['EmailSubject'], $email['EmailFrom'], $email['EmailTo'], $email['ReplyTo']));
 	}
 
@@ -782,14 +745,13 @@ foreach ($emails as $email)
 	elseif ( preg_match('/unread.gif/i', $email['ReadTag'] ))
 		$email['msgclass'] = "itemb";
 
-	if ($_REQUEST['ajax'])
-	{
+	if ($_REQUEST['ajax']) {
 		$email['ReadTag'] = preg_replace("/.*src=('|\").*\/(.*)\.gif('|\").*/", '$2', $email['ReadTag']);
 
-		if( strpos($email['EmailAttach'], 'attachment.gif') !== false)	{
-		$email['EmailAttach'] = '1';
-		} else	{
-		$email['EmailAttach'] = '0';
+		if( strpos($email['EmailAttach'], 'attachment.gif') !== false) {
+    		$email['EmailAttach'] = '1';
+		} else {
+	    	$email['EmailAttach'] = '0';
 		}
 	}
 
@@ -799,16 +761,13 @@ foreach ($emails as $email)
 
 	// Display the email-row on the fly, if sorted using the default id field, and no mailbox sort
 	// defined ( only for POP3/IMAP mail filters )
-	if ($var['sort'] == 'id')
-	{
+	if ($var['sort'] == 'id') {
 	    echo $atmail->parse("html/$atmail->Language/$atmail->LoginType/emailentry{$var['style']}{$var['suffix']}.html",
 	      array_merge($email, array('msgnum' => $i, 'count' => $var['count'], 'encfolder' => urlencode($email['folder']))));
 
         $args = array();
         $atmail->pluginHandler->triggerEvent('onEchoedEmailEntry', $args);
-	}
-	else
-	{
+	} else {
 		// Regular From/Subject field, sort via date
 		if ($var['sort'] != "EmailDate")
 			$h[$id] = $email[$var['sort']];
@@ -827,8 +786,7 @@ foreach ($emails as $email)
 	$id--;
 }
 
-if( $var['sortactive'] && $var['msgmove'] )
-{
+if( $var['sortactive'] && $var['msgmove'] ) {
 
 	# We are a POP3/IMAP acount, and a message filter has been detected
 	# Refresh the mailbox list, because our sequence ID's are all out
@@ -844,16 +802,14 @@ if( $var['sortactive'] && $var['msgmove'] )
 	<input type="hidden" name="msgend" value="{$var['msgend']}">
 EOF;
 
-	foreach($msgmove as $value)
-	{
+	foreach($msgmove as $value) {
 		if (!$value)
 			continue;
 		$value = serialize($value);
 		print "<input type='hidden' name='msgmove[]' value='$value'>\n";
 	}
 
-	foreach($moved as $value)
-	{
+	foreach($moved as $value) {
 		if (!$value)
 			continue;
 
@@ -866,49 +822,36 @@ EOF;
 }
 
 // Next, sort through the mailbox and display the email rows
-if($var['sort'] == "EmailSize")
-{
+if($var['sort'] == "EmailSize") {
 	// If size has MB, calculate the size in KB to avoid a mixup in the sort-order
-	foreach($h as $k => $v)
-	{
-		if (strpos($v, 'MB') !== false)
-		{
+	foreach($h as $k => $v) {
+		if (strpos($v, 'MB') !== false) {
 			$h[$k] = str_replace(' MB', '', $v);
 			$h[$k] = round($v * 1024 * 1024);
 			//$h[$k] .= " K";
 		}
 
-		elseif (strpos($v, 'K') !== false)
-		{
+		elseif (strpos($v, 'K') !== false) {
 			$h[$k] = str_replace(' K', '', $v);
 			$h[$k] = round($v * 1024);
 			//$h[$k] .= " K";
 		}
-
-
 	}
 
-	if (strlen($var['order']) > 0)
-	{
+	if (strlen($var['order']) > 0) {
 		// Sort the results from A - Z
 		asort($h);
 		foreach (array_keys($h) as $key)
 			print $d[$key];
-	}
-	else
-	{
+	} else {
 		//Sort the results from Z - A
 		arsort($h);
 		foreach (array_keys($h) as $key)
 			print $d[$key];
 	}
-
-}
-elseif ($var['sort'] != "id" || $var['sortactive'] && !$var['msgmove'])
-{
+} elseif ($var['sort'] != "id" || $var['sortactive'] && !$var['msgmove']) {
 	// Sort from received date
-	if ($var['order'] && $var['sort'] == "id")
-	{
+	if ($var['order'] && $var['sort'] == "id") {
 		// lower case the keys
 		$tmp = array();
 		foreach ($h as $k => $v)
@@ -918,9 +861,7 @@ elseif ($var['sort'] != "id" || $var['sortactive'] && !$var['msgmove'])
 		asort($tmp);
 		foreach (array_keys($tmp) as $key)
 			print $d[$key];
-	}
-	elseif($var['sort'] == "id")
-	{
+	} elseif($var['sort'] == "id") {
 		// lower case the keys
 		$tmp = array();
 		foreach ($h as $k => $v)
@@ -933,8 +874,7 @@ elseif ($var['sort'] != "id" || $var['sortactive'] && !$var['msgmove'])
 	}
 
 	// Sort from the specified order
-	if($var['order'] && $var['sort'] != "id")
-	{
+	if($var['order'] && $var['sort'] != "id") {
 		// lower case the keys
 		$tmp = array();
 		foreach ($h as $k => $v)
@@ -945,9 +885,7 @@ elseif ($var['sort'] != "id" || $var['sortactive'] && !$var['msgmove'])
 		foreach (array_keys($tmp) as $key)
 			print $d[$key];
 
-	}
-	elseif($var['sort'] != "id")
-	{
+	} elseif($var['sort'] != "id") {
 		// lower case the keys
 		$tmp = array();
 		foreach ($h as $k => $v)
@@ -961,8 +899,7 @@ elseif ($var['sort'] != "id" || $var['sortactive'] && !$var['msgmove'])
 }
 
 // Display a blank page if no messages exist
-if ( !$var['count'] )
-{
+if ( !$var['count'] ) {
 	print $atmail->parse("html/$atmail->Language/$atmail->LoginType/emailentry_blank{$var['suffix']}.html", array('FolderName' => $mail->folder_select_lang( $var['folder'], $atmail->Language, 1 )));
 
 	if ($atmail->XUL)
@@ -986,5 +923,3 @@ print $atmail->parse("html/$atmail->Language/$atmail->LoginType/showmail_bottom{
 // Quit gracefully from the session
 $mail->quit();
 $atmail->end();
-
-?>
