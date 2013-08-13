@@ -5,6 +5,12 @@ For the complete version history please see our Trac timeline interface at:
 
 http://dev.atmail.com/atmailopentrac/timeline
 
+*** ATMAIL OPEN 1.05 - March 2012 ***
+
+- Fixed security vulnerability related to email attachment execution: All attachments that are uploaded or extracted from an email and stored in the users' temp dirs are now appended with a ".safe" extension to avoid any server execution of those file
+- Fixed path traversal vulnerability in compose.php, SendMsg.php and mime.php
+
+
 *** ATMAIL OPEN 1.04 - July 2010 ***
 
 - added support for marking multiple selected emails as read/unread

@@ -184,7 +184,7 @@ class SendMsg
 	            $this->inlineimages[] = array('filename' => "$dir/$file", 'cid' => $m[1], 'name' => $m[2]);
 	        }
 	        elseif (preg_match("/^$acc-$unique/", $file))
-	        {
+	        {	
 	            $this->attach($file);
 	            $this->EmailAttach++;
 	        }
@@ -576,6 +576,9 @@ EOF;
 
 	            // Strip the filename header with our account, rand and pid prefix
 				$name = preg_replace("/^$this->Account-\d+-/", '', $name);
+				
+				// strip the .safe extension
+				$name = preg_replace('/\.safe$/', '', $name);
 
 	            // Find the extension of the file
 	            if ( preg_match('/\.(\w+)$/', $name, $match) )
@@ -818,6 +821,8 @@ EOF;
 		{
 			foreach($this->attachname as $file)
 			{
+				$file = basename($file);
+				
 				// Delete the attachment after added to the msg
 				if (file_exists($atmail->tmpdir . "/$file"))
 					@unlink($atmail->tmpdir . "/$file");
@@ -838,8 +843,11 @@ EOF;
 		global $pref, $atmail;
 
 	    // Just in case ...
-	    $file = str_replace('../', '', $file);
+	    $file = basename($file);
 
+		// add the .safe extension which the file has on disk
+		$file .= ".safe";
+		
 	    // Delete the attachment after added to the msg
 	    if (file_exists($atmail->tmpdir . "/{$atmail->Account}-$unique-$file")) {
 	       @unlink($atmail->tmpdir . "/{$atmail->Account}-$unique-$file");
@@ -878,6 +886,7 @@ EOF;
 	            $size = filesize($atmail->tmpdir . "/$filename");
 	            $size = $size / 1024;
 	            $filename = preg_replace("/^{$atmail->Account}-$unique-/", '', $filename);
+	            $filename = preg_replace('/\.safe$/', '', $filename);
 	            $h[$filename]['size'] = sprintf("%2.1f", $size);
 	        }
 
@@ -900,7 +909,9 @@ EOF;
 	        return false;
 	    }
 
-		$filename = $_FILES['fileupload']['name'];
+		// strip any path and add ".safe" as the extension to avoid any uploaded scripts being exectued (e.g. .php)
+		$filename = basename($_FILES['fileupload']['name']) . ".safe";
+		$unique = basename($unique);
 		$pathname = AtmailGlobal::escape_pathname($atmail->tmpdir . "/{$atmail->Account}-$unique-$filename");
 
 		if ( file_exists($pathname) ) {
@@ -926,6 +937,8 @@ EOF;
     function create_attachment($filename, $content)
     {
         global $atmail;
+        
+        $filename = basename($filename) . ".safe";
         $pathname = AtmailGlobal::escape_pathname($atmail->tmpdir . "/{$this->Account}-$this->Unique-$filename");
 
         file_put_contents($pathname, $content);
@@ -1027,12 +1040,15 @@ EOF;
 	# Rename an attachment on disk for Ajax interface
 	function renameattach($unique, $attach)	{
 		global $pref, $atmail;
-
+		
+		$unique = basename($unique);
+		$attach = basename($attach);
+		
 		$file = $atmail->tmpdir . $attach;
 
 		# If the filename exists
 		if(file_exists($file))	{
-			$this->copyFile($file, $atmail->tmpdir . $atmail->Account . "-$unique-$attach");
+			$this->copyFile($file, $atmail->tmpdir . $atmail->Account . "-$unique-$attach.safe");
 		}
 
 	}

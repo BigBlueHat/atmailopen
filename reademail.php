@@ -319,8 +319,11 @@ function parse_attachments(&$obj)
 	    // Unescape the filename if required
 	    $name = $obj->myescape($v['name']);
 
+		$name = preg_replace('/\.safe$', $name);
+		
 		// Take away the number extension, if the attachment name already exists on the server
 	    $name = preg_replace('/-\d+\.(\w+)/', '\.$1', $name);
+	    
 	    if ( $v['type'] == "file")
 	    {
 	        if ($v['fwdmsg']) {
@@ -364,7 +367,7 @@ function parse_attachments(&$obj)
 					  'Size'     => $v['size'],
 					  'Desc'     => $v['desc'],
 					  'Download' => rawurlencode($v['name']),
-					  'Name'     => $v['name'],
+					  'Name'     => preg_replace('/\.safe$/', '', $v['name']),
 					  'Icon'     => $var['icon'],
 					  'Target'   => $target)
 						);
@@ -374,15 +377,14 @@ function parse_attachments(&$obj)
 	    else
 		{
 			//$displayname = $v['mime'] ? $v['mime'] : $name; // Correctly read the MIME header for the real filename , not yet implemented
-
-			$displayname = $obj->myunescape($name);
+			//$displayname = $name;//$obj->myunescape($name);
 	        $download = $obj->myescape($v['name']);
 
 			// Make a string of raw attachments for JS functions
 			$var['rawattachments'] .= "{$obj->attachname[$k]['name']}::";
-			$var['image_attachments'] .= "<hr noshade width='95%'><font class='sw'>{$v['desc']} ($displayname):</font><br>
-			<a target=\"_blank\" href=\"mime.php?file={$v['rawname']}&name=$download\" title=\"download image ({$v['size']}kb)\">
-			<img src='mime.php?file=" . rawurlencode($v['rawname']) . "&amp;name=" . $obj->myescape($v['desc']) . "' style='max-width: 95%;'>
+			$var['image_attachments'] .= "<hr noshade width='95%'><font class='sw'>{$v['desc']} ($download):</font><br>
+			<a target=\"_blank\" href=\"mime.php?file=" . rawurlencode($v['rawname']) . ".safe&name=$download.safe\" title=\"download image ({$v['size']}kb)\">
+			<img src='mime.php?file=" . rawurlencode($v['rawname']) . ".safe&amp;name=" . $obj->myescape($v['desc']) . "' style='max-width: 95%;'>
 			</a>";
 
 		}
