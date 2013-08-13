@@ -22,8 +22,10 @@ $atmail = new AtmailGlobal;
 
 $auth =& $atmail->getAuthObj();
 
-$filename = $_REQUEST['file'];
+$filename = preg_replace("/[^a-z0-9\-\/._$>]/i", "", $_REQUEST['file']);
 $redirect = $_REQUEST['redirect'];
+
+$_REQUEST['func'] = preg_replace("/[^a-z0-9]/i", "", $_REQUEST['func']);
 
 // No auth necessary to display login page
 if ($filename == 'html/login-light.html') {
@@ -84,9 +86,6 @@ if (!$atmail->Language)
 $filename = str_replace(array('$this->Language', 'LANG'), $atmail->Language, $filename);
 
 // Let any language file use the following
-$type["html/$atmail->Language/calendar/menubarcal.html"]        	= 1;
-$type["html/$atmail->Language/calendar/index-simple.html"]        	= 1;
-$type["html/$atmail->Language/calendar/menubarcal-simple.html"] 	= 1;
 
 $type["html/$atmail->Language/xp/heading/contact.html"]        		= 1;
 $type["html/$atmail->Language/blue_pane/blue_pane.html"]        	= 1;
@@ -97,16 +96,6 @@ $type["html/$atmail->Language/javascript/menubar-big.js"]   		= 1;
 $type["html/$atmail->Language/simple/showmail_interface.html"]      = 1;
 $type["html/$atmail->Language/simple/simple/simple.html"]           = 1;
 
-$type["html/$atmail->Language/xp/calendar/scheduling.html"] 		= 1;
-$type["html/$atmail->Language/xp/calendar/menubarcal.html"] 		= 1;
-$type["html/$atmail->Language/xp/xp.html"]        					= 1;
-$type["html/$atmail->Language/xp/xplogin.html"]   					= 1;
-$type["html/$atmail->Language/xp/statusbar.html"] 					= 1;
-$type["html/$atmail->Language/xp/toolbar.html"]             		= 1;
-$type["html/$atmail->Language/xp/toolbar_abook.html"]             	= 1;
-$type["html/$atmail->Language/xp/calendar/index.html"]             	= 1;
-$type["html/$atmail->Language/xp/rb_abookheader.html"]             	= 1;
-$type["html/$atmail->Language/calendar/index.html"]             	= 1;
 
 
 $type["javascript/atmailstyle.css"] = 1;
@@ -185,9 +174,35 @@ if ( $filename == "html/$atmail->Language/simple/showmail_interface.html" )
 	$var['atmailstyle'] = $atmail->parse("html/$atmail->Language/simple/atmailstyle.css" );
 	$var['mailstyle'] = $atmail->parse("html/$atmail->Language/simple/atmailstyle-mail.css");
 	$var['func'] = $_REQUEST['func'];
-	$var['To']  = preg_replace('/^;\s+/', '', $atmail->loadParameter('to'));
+	$var['To']  = $_REQUEST['To'];
 	$var['Cc']  = preg_replace('/^;\s+/', '', $atmail->loadParameter('cc'));
 	$var['Bcc']  = preg_replace('/^;\s+/', '', $atmail->loadParameter('bcc'));
+	
+	// insert default values for Received After selects
+	$after_date = strtotime("-61 days",time());
+	$after_day = date("d", $after_date);
+	$after_month = date("m", $after_date);
+	$after_year = date("Y", $after_date);
+
+    $y1 = date('Y', strtotime('-10 years', time()));
+    $y2 = date('Y');
+    $var['beforeYearOptions'] = $var['afterYearOptions'] = '';
+    for ($y=$y1; $y<=$y2; $y++) {
+        if ($y == $after_year) {
+            $var['afterYearOptions'] .= "<option value=\"$y\" selected>$y</option>\n";
+        } else {
+            $var['afterYearOptions'] .= "<option value=\"$y\">$y</option>\n";
+        }
+    }
+        
+    $y2++;
+    for ($y=$y1; $y<=$y2; $y++) {
+        if ($y == $y2) {
+            $var['beforeYearOptions'] .= "<option value=\"$y\" selected>$y</option>\n";
+        } else {
+            $var['beforeYearOptions'] .= "<option value=\"$y\">$y</option>\n";
+        }
+    }
 }
 
 
@@ -226,14 +241,8 @@ $result =  $atmail->parse( $filename, $var );
 
 if ( $filename == "html/$atmail->Language/simple/showmail_interface.html" )
 {
-	// insert default values for Received After selects
-	$after_date = strtotime("-61 days",time());
-	$after_day = date("d", $after_date);
-	$after_month = date("m", $after_date);
-	$after_year = date("y", $after_date);
 	$result = preg_replace("/(<select id=\"SearchAfterDay\".*)<option value=\"$after_day\"/", "\$1<option value=\"$after_day\" selected", $result);
 	$result = preg_replace("/(<select id=\"SearchAfterMonth\".*)<option value=\"$after_month\"/", "\$1<option value=\"$after_month\" selected", $result);
-	$result = preg_replace("/(<select id=\"SearchAfterYear\".*)<option value=\"$after_year\"/", "\$1<option value=\"$after_year\" selected", $result);
 }
 
 print $result;

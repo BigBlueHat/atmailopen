@@ -137,7 +137,6 @@ print $atmail->parse("html/$atmail->Language/simple/showmail_interface.html", $v
 $atmail->end();
 
 
- $atmail->end();
 function redirectToInstaller()
 {
     if (!file_exists('install/index.php')) {
@@ -147,4 +146,3 @@ function redirectToInstaller()
     header('Location: install/');
 }
 
-?>

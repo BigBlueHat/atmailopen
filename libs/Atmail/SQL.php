@@ -31,7 +31,7 @@ class SQL {
     var $AbookGroup;
     var $UserPgp;
 	var $tableNames = array();
-
+    
 	// Constructor for SQL class
 	function SQL()
 	{
@@ -47,7 +47,7 @@ class SQL {
 			}
 		}
 
-	    $this->debug = 0;
+	    $this->debug = $pref['debug_sql'];
 
 	    // Set some DB engine specific function names
 	    if ($pref['sql_type'] == 'sqlite') {
@@ -206,8 +206,15 @@ class SQL {
 		$data = array($box, $id);
 		$query = "update $this->EmailDatabase set EmailBox=? where id=?";
 		$result =& $this->dbh->query($query, $data);
-		if (DB::isError($result))
-			catcherror($result->getMessage());
+		if (DB::isError($result)) {
+			if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $result->getMessage() . " - " . $result->getUserInfo() . "\n");
+		    }
+		    
+		    return false;
+	    }
+	    
+	    return true;
 	}
 
 	function savemsg($arg)
@@ -232,8 +239,12 @@ class SQL {
 		$result =& $this->dbh->query($query, $data);
 		unset($data);
 
-		if (DB::isError($result))
-			catcherror($result->getMessage());
+		if (DB::isError($result)) {
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $result->getMessage() . " - " . $result->getUserInfo() . "\n");
+		    }
+            return false;
+		}
 
 		// Get the unique ID key from the EmailDatabase table, from the last Insert
 	    $key = $this->getid();
@@ -261,13 +272,17 @@ class SQL {
 		// if the email was incorrectly inserted into the database
 		if (DB::isError($result))
 		{
+		    if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $result->getMessage() . " - " . $result->getUserInfo() . "\n");
+		    }
+
 			$data = array($key, $arg['Account']);
 			$query = "DELETE FROM $this->EmailDatabase WHERE id=? AND Account=?";
 			$this->dbh->query($query, $data);
-			catcherror("Cannot save the email to the database. The maximum data size has exceeded from the database server. Contact the Admin to increase the max_allowed_packet in the my.cnf file, or reduce the message size.");
+            return false;
 		}
 
-		return;
+		return true;
 	}
 
 	function mailboxsize($query)
@@ -275,8 +290,11 @@ class SQL {
 		$db = array();
 
 		$result =& $this->dbh->query($query, null, DB_FETCHMODE_ASSOC);
-		if (DB::isError($result))
-			catcherror($result->getMessage());
+		if (DB::isError($result)) {
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $result->getMessage() . " - " . $result->getUserInfo() . "\n");
+		    }
+		}
 
 		$num = 0;
 
@@ -432,8 +450,10 @@ class SQL {
 		$res = $this->dbh->getOne($query, $data);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
-			return false;
+		    if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
+		    return false;
 		}
 
 		return $res;
@@ -454,7 +474,9 @@ class SQL {
 
 		$res = $this->dbh->getOne($query, $data);
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return false;
 		}
 		return $res;
@@ -474,7 +496,9 @@ class SQL {
 		$res = $this->dbh->query($query, $data);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = ($query)" . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
@@ -499,7 +523,9 @@ class SQL {
 		$res = $this->dbh->query($query, $data);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
@@ -537,15 +563,17 @@ class SQL {
 		if (!is_array($data))
 			settype($data, 'array');
 
-		$hash = $this->dbh->getRow($query, $data, DB_FETCHMODE_ASSOC);
+		$res = $this->dbh->getRow($query, $data, DB_FETCHMODE_ASSOC);
 
-		if (DB::isError($hash)) {
-			file_put_contents("php://stderr", "SQL Error = " . $hash->getMessage() . " - " . $hash->getUserInfo() . "\n");
+		if (DB::isError($res)) {
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
-		$this->cleanKeys($hash);
-		return $hash;
+		$this->cleanKeys($res);
+		return $res;
 	}
 
 	/**
@@ -562,7 +590,9 @@ class SQL {
 		$res = $this->dbh->query($query, $data);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
@@ -590,7 +620,9 @@ class SQL {
 		$res = $this->dbh->query($query, $data);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
@@ -611,10 +643,14 @@ class SQL {
 	 **/
 	function sqldo($query, $data=null)
 	{
+		$data = $this->cleanData($data);
+		
 		$res = $this->dbh->query($query, $data);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
@@ -624,16 +660,22 @@ class SQL {
 
 	function sqldoraw($query, $data=null)
 	{
+		$data = $this->cleanData($data);
+		
 		$res = $this->dbh->query($query, $data);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "RAW SQL Error, trying to ping DB = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 
 			$this->ping();
 
 			$res = $this->dbh->query($query, $data);
 			if (DB::isError($res)) {
-				file_put_contents("php://stderr", "RAW SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+                if ($this->debug) {
+                    file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+    		    }
 				return -1;
 			}
 
@@ -656,7 +698,9 @@ class SQL {
 		$res = $this->dbh->getListOf('tables');
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
@@ -669,7 +713,9 @@ class SQL {
 		$handle = $this->dbh->prepare($query);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
@@ -678,10 +724,14 @@ class SQL {
 
 	function execute_multiple($handle, $data)
 	{
+		$data = $this->cleanData($data);
+		
 		$res = $this->dbh->executeMultiple($handle, $data);
 
 		if (DB::isError($res)) {
-			file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+            if ($this->debug) {
+                file_put_contents("php://stderr", "SQL Error = " . $res->getMessage() . " - " . $res->getUserInfo() . "\n");
+		    }
 			return -1;
 		}
 
@@ -714,7 +764,7 @@ class SQL {
 			}
 			$date = "datetime({$this->$when}, '$sign$factor $interval')";
 		} else {
-			$date = "DATE_ADD({$this->$when}, INTERVAL $factor $interval)";
+			$date = "DATE_SUB({$this->$when}, INTERVAL $factor $interval)";
 		}
 
 		return $date;
@@ -829,33 +879,27 @@ class SQL {
 		return $string;
 	}
 
-	/**
-	 * Custom error reporting if server is down
-	 *
-	 */
-	function display_error()
+	
+	function cleanData($data)
 	{
-	    if (condition) {
-
-	    }
-	   "
-
-
-
-Content-Type: text/html\n\n
-
-<h1>Database Connection Error</h1>
-<font color='red'>$error</font>
-<ul>";
-//$hint
-//<li>Check the global configuration
-//file (/usr/local/atmail/webmail/libs/Atmail/Config.pm) for the correct database details. Edit the configuraiton file with a text-editor and define the
-//fields "sql_host", "sql_user", "sql_pass" and "sql_table"</li>
-//<li>Run the /usr/local/atmail/webmail/install.pl script to check database details</li>
-//
-//</ul>
+		// hack to fix issue with sqlite and php4
+		if (!is_null($data) && $this->type == 'sqlite') {
+			
+			if (is_array($data)) {
+				foreach ($data as $k => $v) {
+					if (empty($v)) {
+						$data[$k] = NULL;
+					}
+				}
+			} elseif (empty($data)) {
+				$data = NULL;
+			}
+		}
+		
+		return $data;
 	}
-
+	
+	
 }//end SQL class
 
 ?>

@@ -89,20 +89,21 @@ function util_info()
     //}
 
 	$var['delim'] = $mail->Deliminator;
-
-	if (isset($_REQUEST['renamefolder']) && !empty($_REQUEST['curname']) && !empty($_REQUEST['foldername'])) {
-		if ($_REQUEST['curname'] != 'Sent' && $_REQUEST['curname'] != 'Trash' &&
-		    $_REQUEST['curname'] != 'Drafts' && $_REQUEST['curname'] != 'Spam') {
+	$curname = urldecode($_REQUEST['curname']);
+	
+	if (isset($_REQUEST['renamefolder']) && !empty($curname) && !empty($_REQUEST['foldername'])) {
+		if ($curname != 'Sent' && $curname != 'Trash' &&
+		    $curname != 'Drafts' && $curname != 'Spam') {
 
 		    // Cannot change parent name
-		    if (false !== $pos = strrpos($_REQUEST['curname'], $mail->Deliminator)) {
-    		    $parent = substr($_REQUEST['curname'], 0, $pos);
+		    if (false !== $pos = strrpos($curname, $mail->Deliminator)) {
+    		    $parent = substr($curname, 0, $pos);
     		    $new_folder = $parent . $mail->Deliminator . $_REQUEST['foldername'];
 		    } else {
 		        $new_folder = $_REQUEST['foldername'];
 		    }
 
-			$mail->renamefolder(str_replace('/', $mail->Deliminator, $_REQUEST['curname']),
+			$mail->renamefolder(str_replace('/', $mail->Deliminator, $curname),
 			                    str_replace('/', $mail->Deliminator, $new_folder));
 			$reload = true;
 			//$_SESSION['folderinfo'][$new_folder] = $_SESSION['folderinfo'][$_REQUEST['curname']];

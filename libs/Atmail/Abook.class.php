@@ -34,7 +34,6 @@ class Abook
 	        require_once('SQL.php');
 	        require_once('Global.php');
             $this->db = new SQL();
-            $this->db->table_names($this->Account);
             $this->Account_Escape = $this->db->quote($this->Account);
 	    }
         else
@@ -43,6 +42,7 @@ class Abook
             $this->Account_Escape = $this->db->quote($atmail->Account);
         }
 
+        $this->db->table_names($this->Account);
         $this->Type = "sql";
 
 		$this->Abook = Filter::cleanSqlFieldNames($this->db->Abook); //'Abook_' . substr($atmail->Account, 0, 1);
@@ -198,9 +198,11 @@ class Abook
 			?,?,?,?, $this->Account_Escape, ?, ?, {$this->db->NOW}
 			)", $data);
 
-		$id = $this->db->getid();
-
-	    return $id;
+        if (!DB::isError($res)) {
+		    return $this->db->getid();
+        }
+        
+	    return false;
 	}
 
 
@@ -846,10 +848,14 @@ class Abook
 
 	function clean($var, $num)
 	{
-	    $newvar = substr( $var, 0, $num );
-	    $newvar = rtrim($newvar);
+        if (function_exists('mb_substr')) {
+	        $newvar = mb_substr( $var, 0, $num );
+        } else {
+            $newvar = substr( $var, 0, $num );
+	    }
+        $newvar = rtrim($newvar);
 	    if ( count($var) > $num )
-	    	$newvar .= ".." ;
+	    	$newvar .= "..." ;
 
 	    return $newvar;
 	}
@@ -912,7 +918,7 @@ class Abook
 		        	$j = $i + 1;
 		            $name = $_REQUEST["ImportField_$j"];
 
-		            if (empty($name)) {
+		            if (empty($name) || isset($db[$name]) && !empty($db[$name])) {
 		            	continue;
 		            }
 

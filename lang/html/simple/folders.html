@@ -42,13 +42,15 @@ document.write("<!--Netscape Style Sheet-->");
 
 function DeleteFolder(FolderNum, FolderName, purge) {
 
+	var FolderNameRaw = FolderName;
+	FolderName = Url.decode(FolderName);
 	if (purge == 1) {
 		var confirmtxt = '$lang['lang_blue_pane_folders_purgefolderconfirm']';
 	} else {
 		var confirmtxt = '$lang['lang_blue_pane_folders_delfolderconfirm']';
 	}
 	if (confirm([confirmtxt])) {
-      location.href = "util.php?func=info&delete=" + FolderName + '&purge=' + purge;
+      location.href = "util.php?func=info&delete=" + FolderNameRaw + '&purge=' + purge;
     }
 }
 
@@ -67,7 +69,7 @@ function updateRename(folder) {
 		if (folder.indexOf(delim) != -1) {
 			var parts = folder.split(delim);
 			parts.pop();
-			document.getElementById('parentName').innerHTML = parts.join(delim) + delim;
+			document.getElementById('parentName').innerHTML = Url.decode(parts.join(delim) + delim);
 		} else {
 			document.getElementById('parentName').innerHTML = '';
 		}

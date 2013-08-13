@@ -9,6 +9,7 @@ var Url = {
 
 	// public method for url encoding
 	encode : function (string) {
+	    if (!string) return '';
 		return escape(this._utf8_encode(string));
 	},
 

@@ -43,8 +43,9 @@ class Message_Part
 
 				foreach ($val as $k => $v)
 				{
-					if (empty($k)) continue;
+					if (empty($k) || !isset($k)) continue;
 					$k = strtolower(str_replace(array('-', ':'), array('_', ''), $k));
+					if($k)
 					$this->$k = $v;
 				}
 
@@ -90,16 +91,15 @@ class Message_Part
 			$filename = $m[1];
 		}
 		*/
-
         if (!empty($this->headers['content-disposition'])) {
-	        if (preg_match('/filename=\s*(.+)$/i', $this->headers['content-disposition'], $m)) {
+	        if (preg_match('/filename=\s*([^;]+)/i', $this->headers['content-disposition'], $m)) {
 	            $filename = $m[1];
 	        }
 	    }
 
 		// try to get filename from Content-Type if missing from Content-Disposition
 	    if (empty($filename) && !empty($this->headers['content-type'])) {
-	        if (preg_match('/name=\s*(.+)$/i', $this->headers['content-type'], $m)) {
+	        if (preg_match('/name=\s*([^;]+)/i', $this->headers['content-type'], $m)) {
 	            $filename = $m[1];
 	        }
 	    }
@@ -147,21 +147,55 @@ class Message_Part
 		// Some clients break up long filenames into two parts ie filename*0="" and filename*1=""
 		// lets see if this is the case and join them together.
 		if (empty($filename)) {
-		    if (preg_match_all('/filename(\*\d+)="(.+?)"/i', $this->headers['content-disposition'], $m, PREG_PATTERN_ORDER)) {
-		        $filename = join('', $m[2]);
+		    if (false !== $pos = strpos($this->headers['content-disposition'], 'filename')) {
+		        $parts = preg_split('/filename\*\d+\*?=/', substr($this->headers['content-disposition'], $pos));
+		        foreach ($parts as $part) {
+		            $filename .= trim(preg_replace('/; .*/', '', $part), ' "');
+		        }
+		    }
+		}
+		
+				// Some clients break up long filenames into two parts ie filename*0="" and filename*1=""
+		// lets see if this is the case and join them together.
+		if (empty($filename)) {
+		    if (false !== $pos = strpos($this->headers['content-type'], 'name')) {
+		        $parts = preg_split('/name\*\d+\*?=/', substr($this->headers['content-type'], $pos));
+		        foreach ($parts as $part) {
+		            $filename .= trim(preg_replace('/; .*/', '', $part), ' "');
+		        }
+		    }
+		}
+		
+		/*
+		if (empty($filename)) {
+		    if (preg_match_all('/filename\*\d+\*?=(.+?)(;|filename)/i', $this->headers['content-disposition'], $m, PREG_PATTERN_ORDER)) {
+		        var_dump($m);
+		        $filename = '';
+		        foreach($m[1] as $part) {
+		            $filename .= trim($part, '";');    
+		        }
 		    }
 		}
 
 		// Some clients break up long filenames into two parts ie filename*0="" and filename*1=""
 		// lets see if this is the case and join them together.
 		if (empty($filename)) {
-		    if (preg_match_all('/name(\*\d+)="(.+?)"/i', $this->headers['content-type'], $m, PREG_PATTERN_ORDER)) {
-		        $filename = join('', $m[2]);
+		    if (preg_match_all('/filename\*\d+\*?=(.+?)(;|$)/i', $this->headers['content-type'], $m, PREG_PATTERN_ORDER)) {
+		        $filename = '';
+		        foreach($m[1] as $part) {
+		            $filename .= trim($part, '";');    
+		        }		    
 		    }
 		}
-
-		if (empty($filename))
-            return '';
+        */
+        // If no filename is found but the part has a Content-ID header use that as the name
+		if (empty($filename)) {
+		    if (isset($this->headers['content-id']) && !empty($this->headers['content-id'])) {
+		        $filename = $this->headers['content-id'];
+		    } else {
+                return '';
+		    }
+		}
 
 		// clean up filename
 		$filename = trim($filename);
@@ -220,6 +254,19 @@ class Message_Part
         return false;
     }
 
+    function is_image()
+    {
+        if ($this->ctype_primary == 'image') {
+            return true;
+        }
+
+        if ($this->ctype_secondary == 'octet-stream' && preg_match('/\.([^.]+)$/', $this->get_filename(), $m)) {
+            return in_array(strtolower($m[1]), array('jpg', 'jpeg', 'gif', 'png'));
+        }
+
+        return false;
+    }
+
 	function set_path($path)
 	{
 		$this->path = $path;
@@ -249,6 +296,15 @@ class Message_Part
 	    return '';
 	}
 
+
+    function parent_mime_type()
+    {
+        if(preg_match('/([a-z0-9]+\/[a-z0-9]+)/i', $this->parent_ctype, $m)) {
+            return $m[1];
+        }
+
+        return '';
+    }
 }
 
 ?>

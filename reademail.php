@@ -69,8 +69,7 @@ $var['atmailstyle'] .= $atmail->parse("html/$atmail->Language/$atmail->LoginType
 
 // Which email to read
 $var['id']     = $_REQUEST['id'];
-$var['folder'] = urldecode($_REQUEST['folder']);
-
+$var['folder'] = $_REQUEST['folder'];
 $var['print']  = $_REQUEST['print'];
 $var['cache']  = $_REQUEST['cache'];
 
@@ -364,7 +363,7 @@ function parse_attachments(&$obj)
 					  'FileName' => rawurlencode($v['rawname']),
 					  'Size'     => $v['size'],
 					  'Desc'     => $v['desc'],
-					  'Download' => $obj->myescape($v['name']),
+					  'Download' => rawurlencode($v['name']),
 					  'Name'     => $v['name'],
 					  'Icon'     => $var['icon'],
 					  'Target'   => $target)

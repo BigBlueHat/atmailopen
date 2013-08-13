@@ -58,15 +58,17 @@ $atmail->loadprefs();
 $var['atmailstyle'] = $atmail->parse("html/$atmail->Language/$atmail->LoginType/atmailstyle.css");
 
 // Create a new log object
-$log = new Log(array('Account' => "$atmail->username@$atmail->pop3host"));
-
-$num = $log->logcheck('SendMail', $_SERVER['REMOTE_ADDR'], "{$atmail->username}@{$atmail->pop3host}");
-
-if ( $num > $pref['filter_max_msgs'] && $pref['filter_max_msgs'] > 1 )
-{
-    print $atmail->parse("html/$atmail->Language/auth_spammer.html");
-    $log->write_log( 'Error', "Spam Detected from {$_SERVER['REMOTE_ADDR']} : $num msgs sent" );
-    $atmail->end();
+if (!$_REQUEST['Draft']) {
+    $log = new Log(array('Account' => "$atmail->username@$atmail->pop3host"));
+    
+    $num = $log->logcheck('SendMail', $_SERVER['REMOTE_ADDR'], "{$atmail->username}@{$atmail->pop3host}");
+    
+    if ( $num > $pref['filter_max_msgs'] && $pref['filter_max_msgs'] > 1 )
+    {
+        print $atmail->parse("html/$atmail->Language/auth_spammer.html");
+        $log->write_log( 'Error', "Spam Detected from {$_SERVER['REMOTE_ADDR']} : $num msgs sent" );
+        $atmail->end();
+    }
 }
 
 // Calculate the height of the menubar ( if the Webadmin user toggles off certain features )
@@ -154,6 +156,8 @@ $mail = new GetMail(array(
 	  'Mode'     => $atmail->Mode)
 	);
 
+$mail->login();
+
 // Build the email message to send
 $sendmsg->buildmsg();
 
@@ -177,17 +181,6 @@ else
 	    $var['msg'] = $atmail->parse("html/$atmail->Language/msg/sentmsg.html");
 	else
 	    $var['msg'] = $atmail->parse("html/$atmail->Language/msg/sentmsga.html");
-}
-
-// Toggle where to save the message, native SQL storage or flat-file/IMAP
-if ($mail->Mode == 'sql' && $mail->Type != 'imap') {
-	$sendmsg->savemsg();
-}
-else
-{
-	// Append the message to the server
-	$sentuid = $mail->append($sendmsg->EmailBox, $sendmsg->headers . "\r\n\r\n" . $sendmsg->body);
-	//$mail->mailer->markAsFlag($sentuid, '+FLAGS', '\\Answered');
 }
 
 $args = array();
@@ -224,23 +217,28 @@ $var['emailsubject'] = $mail->quote_header($sendmsg->EmailSubject);
 // If the user is replying to a draft, delete the original copy from the server
 if ($var['DraftID'])
 {
-	$mail->login();
-
 	// Remove the message from the drafts folder
 	$mail->move( $var['DraftID'], "Drafts", "erase", 1);
 }
 
 // Fix for IMAP update UIDL
-$update_id = ($pref['install_type'] != "server" && $mail->Type == 'imap')  ? $var['id'] : "cur/{$var['UIDL']}";
-// Update the email UIDL/unique-id if the message is a reply or forward
-$mail->updateuidl( $var['UIDL'], $var['type'], '', "Inbox",  $update_id);
-$mail->quit();
+if (!empty($var['id'])) {  
+    $update_id = ($pref['install_type'] != "server" && $mail->Type == 'imap')  ? $var['id'] : "cur/{$var['UIDL']}";
+    // Update the email UIDL/unique-id if the message is a reply or forward
+    $mail->updateuidl( $var['UIDL'], $var['type'], '', "Inbox",  $update_id);
+}
 
-$log->write_log( "SendMail", "{$_SERVER['REMOTE_ADDR']}:{$var['emailto']} {$var['emailcc']} {$var['emailbcc']}" );
+// Log the sent message only if not in server mode
+if (!$_REQUEST['Draft']) {
+	$log->write_log( "SendMail", "{$_SERVER['REMOTE_ADDR']}:{$var['emailto']} {$var['emailcc']} {$var['emailbcc']}" );
+}
+
+
+	// Append the message to the server
+	$sentuid = $mail->append($sendmsg->EmailBox, $sendmsg->headers . "\r\n\r\n" . $sendmsg->body);
+	//$mail->mailer->markAsFlag($sentuid, '+FLAGS', '\\Answered');
 
 // Display the sent-message template to the user
 print $atmail->parse("html/$atmail->Language/$atmail->LoginType/sendmsg_ajax.html", array_merge(array('Status' => '0', 'StatusMessage' => 'Sent'), $var));
 
 $atmail->end();
-
-?>
