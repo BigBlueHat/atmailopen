@@ -57,7 +57,7 @@ $var['atmailstyle'] = $atmail->parse("html/$atmail->Language/$atmail->LoginType/
 // Load the time to display in the compose window
 $var['localtime'] = strftime("%c");
 
-// Create a unqiue number - Each compose screen is unique. Used to
+// Create a unique number - Each compose screen is unique. Used to
 // reference which attachments are for what window. Based on the
 // PID and a random number.
 $var['unique'] = $atmail->param_escape('unique');
@@ -68,7 +68,7 @@ if ( !$var['unique'] ) {
 }
 
 // Avoid any fake/malformed unique ID, e.g ../ in pathname
-$var['unique'] = preg_replace('/\.\.\//', '', $var['unique']);
+$var['unique'] = basename($var['unique']);
 
 // see if something is cached
 if (file_exists($atmail->tmpdir .  ".ht$auth->SessionID"))
@@ -159,7 +159,8 @@ elseif ( $var['func'] == "attachment" ) {
 
     $var['delete'] = $_REQUEST['delete'];
     $var['unique'] = $atmail->param_escape('unique');
-
+	$var['unique'] = basename($var['unique']);
+	
     $sendmsg = new SendMsg(array('Account' => "$atmail->username@$atmail->pop3host"));
 
     // Delete the selected attachment

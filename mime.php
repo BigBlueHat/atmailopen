@@ -145,9 +145,8 @@ if ($atmail->status == 1)
 if (($atmail->status == 2) && (!preg_match('/xhtml/i', $_REQUEST['whoscalling'])))
 	$atmail->session_error();
 
-$var['src'] = rawurldecode($_REQUEST['file']);
-$var['src'] = preg_replace('/^.+[\\\\\\/]/', '', $var['src']); // Don't allow to go down a dir, sanity check
-
+// use basename() to remove any path an attacker may add
+$var['src'] = basename(rawurldecode($_REQUEST['file']));
 $tmpfile = $pref['user_dir'] . "/tmp/" . $atmail->auth->get_account() . "/" . $var['src'];
 
 // Exit if no pathname is defined
@@ -166,6 +165,9 @@ $var['type'] = $mime[$var['ext']];
 if ( !$var['type'] )
 	$mime[$var['ext']] = "unknown/data";
 
+// Strip the .safe extension
+$name = preg_replace('/\.safe$/', '', $name);
+
 // If the filename is too long, cut it to a size the HTTP header can read!
 if (strlen($name) > 182)
 {
@@ -180,6 +182,7 @@ if (strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
 } else {
     $encName = $name;    
 }
+
 
 if ($var['ext'] == "html")
 	$atmail->httpheaders();
@@ -213,5 +216,3 @@ while (!feof($fh))
 ob_flush();
 fclose($fh);
 $atmail->end();
-
-?>

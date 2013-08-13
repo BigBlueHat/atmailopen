@@ -79,10 +79,13 @@ class MailParser
 	 			$contents = $this->parts[$i]->get_body();
 	 			$name = $this->parts[$i]->get_filename();
 
-				// Take / and .. out of the filename for security
-				$name = str_replace("/", '', $name);
-				//$name = str_replace("..", '', $name);
+				// Take path out of the filename for security
+				$name = basename($name);
 
+				// Add .safe ext so webserver will not execute any uploaded
+				// scripts if they are directly requested
+				$name .= ".safe";
+				
 				if ($name)
 				{
 		 			$fh = fopen("$this->output_dir/$name", 'w');

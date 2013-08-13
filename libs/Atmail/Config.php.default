@@ -1,6 +1,7 @@
 <?php
 
 $pref = array (
+  'debug_sql' => 0,
   'aspell_path' => '',
   'addressbook_ldap_entries' => '0',
   'autocomplete_ldap_entries' => '0',
@@ -97,7 +98,7 @@ USER IS OVER THE QUOTA - The users email quota has exceeded. The message could n
   'install_type' => 'server',
   'sql_host' => 'localhost',
   'allow_EmailEncoding' => 1,
-  'version' => '1.04',
+  'version' => '1.05',
   'virus_scanner' => '/usr/local/atmail/av/clamdsocket',
   'pallow_Address' => '1',
   'sql_mysqlversion' => 5,
