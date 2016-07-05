@@ -127,10 +127,7 @@ class SendMsg
 		$this->RawEmailSubject = $this->EmailSubject;
 
 	    // Format the date correctly
-	    // Let the SMTP / Sendmail binary decide our timezone / date
-		//ctimelang("english");
-		//$this->Date = strftime( "%a, %d %h %Y %T %Z", time());
-	    $this->Date = date("D, j M Y H:i:s O", time());
+	    $this->Date = date('r');
 
 	    // return an error if To: field contains only , or ;
         if (strlen($this->EmailTo) == 0 || (!preg_match('/\@/', $this->EmailTo) && (preg_match('/,/', $this->EmailTo))) && $this->EmailBox != "Draft")
@@ -187,7 +184,7 @@ class SendMsg
 	            $this->inlineimages[] = array('filename' => "$dir/$file", 'cid' => $m[1], 'name' => $m[2]);
 	        }
 	        elseif (preg_match("/^$acc-$unique/", $file))
-	        {
+	        {	
 	            $this->attach($file);
 	            $this->EmailAttach++;
 	        }
@@ -323,7 +320,7 @@ EOF;
 		        $this->$type = str_replace(array(';', ' Shared Group', ' Group'), array(',', '@SharedGroup', '@Group'), $this->$type);
 
 		        // Remove "smart quotes" (aka dumb quotes)
-		        $smartquotes = array('“', '”', '‘', '’', "\x98", "\x99", "\x8c", "\x9d", chr(147), chr(148), chr(146), 'R20;', 'R21', 'R16;', 'R17');
+		        $smartquotes = array('“', '”', '‘', '’', "\x98", "\x99", "\x8c", "\x9d", chr(147), chr(148), chr(146), 'R20;', 'R21;', 'R17;', 'R16;');
 
 		        $this->$type = str_replace($smartquotes, '"', $this->$type);
 
@@ -579,6 +576,9 @@ EOF;
 
 	            // Strip the filename header with our account, rand and pid prefix
 				$name = preg_replace("/^$this->Account-\d+-/", '', $name);
+				
+				// strip the .safe extension
+				$name = preg_replace('/\.safe$/', '', $name);
 
 	            // Find the extension of the file
 	            if ( preg_match('/\.(\w+)$/', $name, $match) )
@@ -636,7 +636,7 @@ EOF;
 	{
 		$emailbox = ($this->EmailBox)? $this->EmailBox : 'Sent';
 
-	    $this->sql->savemsg(array(
+	    return $this->sql->savemsg(array(
 	      'Account'      => $this->Account,
 	      'EmailSubject' => $this->EmailSubject,
 	      'EmailTo'      => str_replace(array('@SharedGroup', '@Group'), array(' Shared Group', ' Group'), $this->EmailTo),
@@ -743,6 +743,13 @@ EOF;
 	            return false;
 	    }
 
+		// Check if we should use each account's username and password
+		// for the SMTP
+		if ($pref['smtp_per_account_auth']) {
+		    $pref['smtpauth_username'] = $atmail->auth->get_username();
+		    $pref['smtpauth_password'] = $atmail->auth->get_password();
+		}
+		
 		// Optionally authenticate with the SMTP server
 		if ($pref['smtpauth_username'] && $pref['smtpauth_password']) {
 			if($smtp->auth($pref['smtpauth_username'], $pref['smtpauth_password']) !== true) {
@@ -814,6 +821,8 @@ EOF;
 		{
 			foreach($this->attachname as $file)
 			{
+				$file = basename($file);
+				
 				// Delete the attachment after added to the msg
 				if (file_exists($atmail->tmpdir . "/$file"))
 					@unlink($atmail->tmpdir . "/$file");
@@ -834,8 +843,11 @@ EOF;
 		global $pref, $atmail;
 
 	    // Just in case ...
-	    $file = str_replace('../', '', $file);
+	    $file = basename($file);
 
+		// add the .safe extension which the file has on disk
+		$file .= ".safe";
+		
 	    // Delete the attachment after added to the msg
 	    if (file_exists($atmail->tmpdir . "/{$atmail->Account}-$unique-$file")) {
 	       @unlink($atmail->tmpdir . "/{$atmail->Account}-$unique-$file");
@@ -874,6 +886,7 @@ EOF;
 	            $size = filesize($atmail->tmpdir . "/$filename");
 	            $size = $size / 1024;
 	            $filename = preg_replace("/^{$atmail->Account}-$unique-/", '', $filename);
+	            $filename = preg_replace('/\.safe$/', '', $filename);
 	            $h[$filename]['size'] = sprintf("%2.1f", $size);
 	        }
 
@@ -896,7 +909,9 @@ EOF;
 	        return false;
 	    }
 
-		$filename = $_FILES['fileupload']['name'];
+		// strip any path and add ".safe" as the extension to avoid any uploaded scripts being exectued (e.g. .php)
+		$filename = basename($_FILES['fileupload']['name']) . ".safe";
+		$unique = basename($unique);
 		$pathname = AtmailGlobal::escape_pathname($atmail->tmpdir . "/{$atmail->Account}-$unique-$filename");
 
 		if ( file_exists($pathname) ) {
@@ -922,6 +937,8 @@ EOF;
     function create_attachment($filename, $content)
     {
         global $atmail;
+        
+        $filename = basename($filename) . ".safe";
         $pathname = AtmailGlobal::escape_pathname($atmail->tmpdir . "/{$this->Account}-$this->Unique-$filename");
 
         file_put_contents($pathname, $content);
@@ -1023,12 +1040,15 @@ EOF;
 	# Rename an attachment on disk for Ajax interface
 	function renameattach($unique, $attach)	{
 		global $pref, $atmail;
-
+		
+		$unique = basename($unique);
+		$attach = basename($attach);
+		
 		$file = $atmail->tmpdir . $attach;
 
 		# If the filename exists
 		if(file_exists($file))	{
-			$this->copyFile($file, $atmail->tmpdir . $atmail->Account . "-$unique-$attach");
+			$this->copyFile($file, $atmail->tmpdir . $atmail->Account . "-$unique-$attach.safe");
 		}
 
 	}
@@ -1074,7 +1094,7 @@ EOF;
 	    $local_array = explode(".", $email_array[0]);
 	    for ($i = 0; $i < sizeof($local_array); $i++)
 	    {
-	        if (!ereg("^(([A-Za-z0-9!#$%&'*+/=?^_`{|}~-][A-Za-z0-9!#$%&'*+/=?^_`{|}~\.-]{0,63})|(\"[^(\\|\")]{0,62}\"))$", $local_array[$i]))
+	        if (!ereg("^(([A-Za-z0-9!#$%&'*+/=?^_`{|}~\-][A-Za-z0-9!#$%&'*+/=?^_`{|}~.\-]{0,63})|(\"[^(\\|\")]{0,62}\"))$", $local_array[$i]))
 	        {
 	            return false;
 	        }

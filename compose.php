@@ -7,13 +7,11 @@
 // | http://opensource.org/licenses/apache2.0.php                   |
 // +----------------------------------------------------------------+
 
-
 require_once('header.php');
 require_once('Session.php');
 require_once('Global.php');
 require_once('Log.php');
 require_once('SendMsg.php');
-//require_once('PGP.php');
 require_once('Mail/RFC822.php');
 
 session_start();
@@ -35,7 +33,6 @@ $atmail->pop3host = $auth->pop3host;
 if (!$atmail->Language)
 	$atmail->Language = $pref['Language'];
 
-
 // Print the error screen if the account has auth errors, or session timeout.
 if ( $atmail->status == 1 )
 	$atmail->auth_error();
@@ -54,28 +51,24 @@ if (isset($_GET['sending_attachment']) && !count($_POST) && !count($_FILES)) {
 // Load the account preferences
 $atmail->loadprefs();
 
-
-
 // Parse the users custom stylesheet
 $var['atmailstyle'] = $atmail->parse("html/$atmail->Language/$atmail->LoginType/atmailstyle.css");
 
 // Load the time to display in the compose window
 $var['localtime'] = strftime("%c");
 
-// Create a unqiue number - Each compose screen is unique. Used to
+// Create a unique number - Each compose screen is unique. Used to
 // reference which attachments are for what window. Based on the
 // PID and a random number.
 $var['unique'] = $atmail->param_escape('unique');
 $var['delete'] = $_REQUEST['delete'];
 
-if ( !$var['unique'] )
-{
+if ( !$var['unique'] ) {
     $var['unique'] = getmypid() + rand(0, 1000);
-    //$var['unique'] =~ s/\..*//g;
 }
 
 // Avoid any fake/malformed unique ID, e.g ../ in pathname
-$var['unique'] = preg_replace('/\.\.\//', '', $var['unique']);
+$var['unique'] = basename($var['unique']);
 
 // see if something is cached
 if (file_exists($atmail->tmpdir .  ".ht$auth->SessionID"))
@@ -90,12 +83,9 @@ foreach($h as $k => $v)
 	$var[$k] = $v;
 
 // Display the attachment modal window
-if ( $var['func'] == "attachmentmodal" )
-{
+if ( $var['func'] == "attachmentmodal" ) {
     print $atmail->parse("html/$atmail->Language/$atmail->LoginType/attachmentmodal.html", $var);
-}
-
-elseif ( $var['func'] == "attachmentmodalframe" ) {
+} elseif ( $var['func'] == "attachmentmodalframe" ) {
 	$var['maxfilesize'] = ini_get('upload_max_filesize');
 	if (!is_numeric($var['maxfilesize'])) {
 	    if (strpos($var['maxfilesize'], 'M') !== false)
@@ -123,12 +113,9 @@ elseif( $var['func'] == "renameattach")	{
 		echo "<ATTACH STATUS='OK'/>";
 
 	$atmail->end();
-}
 
-elseif ($var['func'] == "attachmentmodallist" )
-{
+} elseif ($var['func'] == "attachmentmodallist" ) {
     $icon = $atmail->icon_hash();
-
     $sendmsg = new SendMsg(array('Account' => "$atmail->username@$atmail->pop3host"));
 
     // Delete the selected attachment
@@ -139,8 +126,7 @@ elseif ($var['func'] == "attachmentmodallist" )
     // window and our logged in account
     $h = $sendmsg->list_attachments($var['unique']);
 
-    foreach ($h as $k => $v)
-    {
+    foreach ($h as $k => $v) {
         $var['filename'] = $k;
         if ( preg_match('/\.(\w+)$/', $var['filename'], $match) )
         	$var['ext'] = $match[1];
@@ -161,23 +147,20 @@ elseif ($var['func'] == "attachmentmodallist" )
 
 		// Increment the counter ( for the Javascript id field )
 		$var['id']++;
-
     }
 
 	$var['AttachNames'] = preg_replace('/; $/', '', $var['AttachNames']);
-
     print $atmail->parse("html/$atmail->Language/$atmail->LoginType/attachmentmodallist.html", $var );
-
 }
 
 // Print the attachment window
-elseif ( $var['func'] == "attachment" )
-{
+elseif ( $var['func'] == "attachment" ) {
     $icon = $atmail->icon_hash();
 
     $var['delete'] = $_REQUEST['delete'];
     $var['unique'] = $atmail->param_escape('unique');
-
+	$var['unique'] = basename($var['unique']);
+	
     $sendmsg = new SendMsg(array('Account' => "$atmail->username@$atmail->pop3host"));
 
     // Delete the selected attachment
@@ -185,8 +168,7 @@ elseif ( $var['func'] == "attachment" )
     	$var['status'] = $sendmsg->delete_attachment( $var['delete'], $var['unique'] );
 	}
     // Upload an attachment to the server if required
-	elseif (isset($_FILES['fileupload']))
-	{
+	elseif (isset($_FILES['fileupload'])) {
 		$var['status'] = $sendmsg->add_attachment($var['unique']);
 		if ($var['status'] === false) {
 			print $atmail->parse("html/$atmail->Language/msg/attachtoolarge.html");
@@ -200,8 +182,7 @@ elseif ( $var['func'] == "attachment" )
     // window and our logged in account
     $h = $sendmsg->list_attachments( $var['unique'] );
 
-    foreach ($h as $k => $v)
-    {
+    foreach ($h as $k => $v) {
         $var['filename'] = $k;
         if ( preg_match('/\.(\w+)$/', $var['filename'], $match) )
         	$var['ext'] = $match[1];
@@ -222,9 +203,5 @@ elseif ( $var['func'] == "attachment" )
 
     }
 
-echo "type = $atmail->LoginType";
     print $atmail->parse("html/$atmail->Language/$atmail->LoginType/attachment.html", $var);
-
 }
-
-?>

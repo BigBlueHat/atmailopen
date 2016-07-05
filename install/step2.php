@@ -2,7 +2,7 @@
 // +----------------------------------------------------------------+
 // | step2.php														|
 // |																|
-// | Function: Collect DB Server info and create @Mail database		|
+// | Function: Collect DB Server info and create AtMail database	|
 // +----------------------------------------------------------------+
 // | AtMail Open - Licensed under the Apache 2.0 Open-source License|
 // | http://opensource.org/licenses/apache2.0.php                   |
@@ -12,8 +12,7 @@
 
 
 // Make sure we are included from install/index.php, exit if not
-if (!defined('ATMAIL_INSTALL_SCRIPT'))
-{
+if (!defined('ATMAIL_INSTALL_SCRIPT')) {
 	// link to installer
 	die("You cannot request this file directly, please use <a href=\"index.php\">the installer</a>");
 }
@@ -22,8 +21,7 @@ $errors = array();
 
 // If the form from Step 2 has been submitted
 // we need to process it
-if (isset($_POST['submit']))
-{
+if (isset($_POST['submit'])) {
 	// Verify the submitted data
 	$sqlType = $_POST['sqltype'];
 	
@@ -60,10 +58,8 @@ if (isset($_POST['submit']))
 	set_include_path('../' . PATH_SEPARATOR . get_include_path());
 	include_once('../libs/PEAR/DB.php');
 
-
 	// Save data if there are no errors
-	if (!count($errors))
-	{
+	if (!count($errors)) {
 		// Store values in $_SESSION['pref'] for writing to
 		// Config.php at end of install
 		$_SESSION['pref']['sql_type']  = $sqlType;
@@ -73,73 +69,61 @@ if (isset($_POST['submit']))
 		$_SESSION['pref']['sql_table'] = $dbName;
 
         // MySQL
-        if ($sqlType == 'mysql') 
-        {
+        if ($sqlType == 'mysql') {
         	
-			if ($_POST['create_db'])
-			{
+			if ($_POST['create_db']) {
 				$db = DB::connect("$sqlType://$sqlUser:$sqlPass@$sqlHost");
 	
-				if (DB::isError($db))
+				if (DB::isError($db)) {
 					$errors['db_connect_error'] = $db->getDebugInfo();
-				else
-				{
+				} else {
 					// lets see if the DB exists
 					$dbNames = $db->getListOf('databases');
-					if (!in_array($dbName, $dbNames))
-					{
+					if (!in_array($dbName, $dbNames)) {
 						// Create the @Mail Database
 						$res = $db->query("CREATE DATABASE $dbName");
 	
-						if (DB::isError($res))
+						if (DB::isError($res)) {
 							$errors['db_create_error'] = $res->getDebugInfo();
-						else
-						{
+						} else {
 							// select the DB
 							$res = $db->query("use $dbName");
 						}
-					}
-					else
+					} else {
 						$errors['db_exists'] = true;
+					}
 				}
-	
-			}
-			else
-			{
+			} else {
 				$db = DB::connect("$sqlType://$sqlUser:$sqlPass@$sqlHost/$dbName");
 	
 				if (DB::isError($db))
 					$errors['db_create_error'] = $db->getDebugInfo();
 			}
 			
-			if (!count($errors) && $_POST['create_tables'])
-			{
+			if (!count($errors) && $_POST['create_tables']) {
 				$tablesCreated = array();
 	
 				// Populate the @Mail DB
 				$file = file('atmail.mysql');
 	
-				foreach ($file as $line)
-				{
+				foreach ($file as $line) {
 					$line = trim($line);
 	
 					// ignore comments and empty lines
 					if (preg_match('/^[\-#]+/', $line) || empty($line))
 						continue;
 
-			                if (preg_match('/^\/\*/', $line) || empty($line))
-                        		        continue;
+			        if (preg_match('/^\/\*/', $line) || empty($line))
+                    	continue;
 	
 					// If we find the end of an sql statement
 					// append the line to $sql and execute it
-					if (preg_match('/;$/', $line))
-					{
+					if (preg_match('/;$/', $line)) {
 						$sql .= "$line\n";
 						$res = $db->query($sql);
 	
 						// Check for an error
-						if (DB::isError($res))
-						{
+						if (DB::isError($res)) {
 							$errors['table_create_error'] = $res->getDebugInfo();
 	
 							// Remove the last table from the array as this
@@ -156,25 +140,21 @@ if (isset($_POST['submit']))
 					}
 					// If we find the beginning of a statement
 					// reset $sql to $line
-					elseif (preg_match('/CREATE TABLE `?([a-z_]+)`?/i', $line, $m))
-					{
+					elseif (preg_match('/CREATE TABLE `?([a-z_]+)`?/i', $line, $m)) {
 						$sql = "$line\n";
 						$tablesCreated[] = $m[1];
-					}
-					elseif (preg_match('/^(CREATE|INSERT)/', $line)) {
+					} elseif (preg_match('/^(CREATE|INSERT)/', $line)) {
 						$sql = "$line\n";
 					}
 	
 					// Otherwise it must be more of the same statement
 					// so append it to $sql
-					else
+					else {
 						$sql .= "$line\n";
+					}
 				}
 			}
-        }
-        
-        elseif ($sqlType == 'sqlite')
-        {
+        } elseif ($sqlType == 'sqlite') {
         	// Back up any existing DB, just in case
         	if (file_exists($dbName)) {
         		rename($dbName, $dbName.'-'.time().'.bak');
@@ -226,12 +206,11 @@ $vars['check_create_db'] = (isset($_REQUEST['submit']) && !isset($_REQUEST['crea
 $vars['check_create_tables'] = (isset($_REQUEST['submit']) && !isset($_REQUEST['create_tables'])) ? '' : 'checked';
 
 if(!isset($vars['sql_user']))
-$vars['sql_user'] = 'root';
+	$vars['sql_user'] = 'root';
 
 $vars['output'] = parse("$htmlPath/step2.phtml", array_merge($vars, $errors));
 
-if (isset($_SESSION['pref']['sql_type']))
-{
+if (isset($_SESSION['pref']['sql_type'])) {
 	$vars['output'] = str_replace("<option value=\"{$vars['output']}\">",
 								  "<option value=\"{$vars['output']}\" selected>",
 								  $vars['output']);
@@ -268,5 +247,3 @@ EOF;
 	fclose($fh);
 	return $return;
 }
-
-?>

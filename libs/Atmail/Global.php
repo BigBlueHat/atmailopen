@@ -55,6 +55,9 @@ function AtmailGlobal()
 // Auth the user account
 function auth($mailauth=null)
 {
+    $args = array();
+    $this->pluginHandler->triggerEvent('onAuthStart', $args);
+
 	global $domains, $pref;
 
     // Lowercase the pop3host
@@ -290,28 +293,27 @@ function auth($mailauth=null)
 
     $status = $this->auth->authuser();
 
-    if ( $status == 1 )
-	{
+    if ( $status == 1 ) {
 		 if (strpos($_SERVER['SCRIPT_NAME'] , 'wap.php') === false && strpos($_SERVER['SCRIPT_NAME'] , 'xhtml.php') === false)
         	$this->httpheaders();
 
         $this->auth_error();
+        return;
     }
 
     elseif ( $status == 3 ) {
         $this->userdisabled();
+        return;
     }
-    else
-	{
-        // Update the LastLogin timestamp
-        $this->auth->update_lastlogin();
-        $this->username = $this->auth->get_username();
-        $this->pop3host = $this->auth->get_pop3host();
-        $this->account  = $this->auth->get_account();
-		$this->loadprefs();
-		$this->MailAuth = $this->MailA;
-		$this->auth->authenticated = true;
-    }
+    
+    // Update the LastLogin timestamp
+    $this->auth->update_lastlogin();
+    $this->username = $this->auth->get_username();
+    $this->pop3host = $this->auth->get_pop3host();
+    $this->account  = $this->auth->get_account();
+    $this->loadprefs();
+    $this->MailAuth = $this->MailA;
+    $this->auth->authenticated = true;
 
 	// Make our sample account data
 	//if($this->demouser == '1')
@@ -366,13 +368,13 @@ function loadprefs()
 
 	// LeaveMsgs = 0 is not spported as yet
 	$this->LeaveMsgs = 1;
-	
+
     if ((isset($_REQUEST['UseSSL']) && $_REQUEST['UseSSL'] == 1) || strpos($_REQUEST['MailType'], 's')) {
         $this->UseSSL = 1;
     } else {
         $this->UseSSL = 0;
     }
-    
+
     $args = array();
     $this->pluginHandler->triggerEvent('onLoadPrefs', $args);
 }
@@ -387,7 +389,7 @@ function loadpersonalities($type=null)
 
 	if ($type)
 	{
-		$text = "$this->ReplyTo::";
+		$text = "$this->ReplyTo::$this->username@$this->pop3host::";
 
 		foreach ($users as $user)
 			$text .= "$user::";
@@ -410,9 +412,10 @@ function loadpersonalities($type=null)
 				$local_name = $this->ReplyTo;
 			}
 
+			$text .= "<option value='$this->ReplyTo' selected>$local_name</option>";
 		}
 
-		$text = "<option value='$this->username@$this->pop3host'>$local_name</option>";
+		$text .= "<option value='$this->username@$this->pop3host'>$this->username@$this->pop3host</option>";
 
 		if (is_array($users))
 		{
@@ -811,7 +814,7 @@ Account			= ?
 	if (isset($args['handled'])) {
 	    return;
 	}
-	
+
     // Next, update the users AutoReply and mail-forwarding options if required
 	$data = array($autoreply, $forward, "$this->username@$this->pop3host");
     $res = $this->db->sqldo("UPDATE Users set AutoReply = ?, Forward = ? where Account = ?", $data);
@@ -1145,7 +1148,7 @@ function getsort($type, $format=null)
             $h[$v[$type]] = $v['EmailFolder'];
         else
             // Build the select box
-            $tmp .= "<option value=\"" . base64_encode($v[$type]) . "\">" . htmlentities($v[$type]) . " -&gt; {$v['EmailFolder']}</option>";
+            $tmp .= "<option value=\"" . base64_encode($v[$type]) . "\">" . htmlentities($v[$type], ENT_QUOTES, 'UTF-8') . " -&gt; {$v['EmailFolder']}</option>";
 
     }
 
@@ -1454,16 +1457,16 @@ function clean_tmp($dir=null) {
 	$sessionId = session_id();
 	$files = array();
 
-    $dh = opendir($pref['user_dir']."/tmp/$dir");
+    if (is_dir($pref['user_dir']."/tmp/$dir") && $dh = opendir($pref['user_dir']."/tmp/$dir")) {
 
-	while (false !== ($file = readdir($dh))) {
-	  	array_push($files, $file); //echo "$file\n";
-	}
+    	while (false !== ($file = readdir($dh))) {
+    	  	array_push($files, $file); //echo "$file\n";
+    	}
+    
+        closedir($dh);
 
-    closedir($dh);
-
-	$this->clean_tmp_dir("{$pref['user_dir']}/tmp/$dir", $files);
-
+	    $this->clean_tmp_dir("{$pref['user_dir']}/tmp/$dir", $files);
+    }
 }
 
 function clean_tmp_dir($dir=null, $files)
@@ -2211,7 +2214,7 @@ return $list;
 function escape_images($txt)
 {
 	$tmp = strtolower($txt);
-	
+
 	// Watch out for javascript in img src URL,  IE doesn't handle these very well. Addresses SA18874.
 	$txt = preg_replace('/<img [^>]+?javascript:.+?>/is', '<img src="" alt="Image Block Forced">', $txt);
 
@@ -2235,10 +2238,10 @@ function escape_images($txt)
  */
 function load_displayimages()
 {
-	
+
 	if(!$this->db->UserSettings)
 	return;
-	
+
 	return $this->db->sqlgetfield("SELECT DisplayImages
 	                               FROM {$this->db->UserSettings}
 	                               WHERE Account = ?", "$this->username@$this->pop3host");

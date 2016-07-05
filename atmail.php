@@ -58,5 +58,3 @@ $log = new Log(array('Account' => "$atmail->username@$atmail->pop3host"));
 $log->write_log( "Login", "Access from {$_SERVER['REMOTE_ADDR']}");
 
 $atmail->end();
-
-?>

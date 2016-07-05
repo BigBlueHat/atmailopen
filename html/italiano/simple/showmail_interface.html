@@ -110,19 +110,7 @@ $var['mailstyle']
               </select>
               /
               <select id="SearchBeforeYear" class="swheader">
-                <option value="00">2000</option>
-                <option value="01">2001</option>
-                <option value="02">2002</option>
-                <option value="03">2003</option>
-                <option value="04">2004</option>
-                <option value="05">2005</option>
-                <option value="06">2006</option>
-                <option value="07">2007</option>
-                <option value="08">2008</option>
-                <option value="09">2009</option>
-                <option value="10">2010</option>
-                <option value="11">2010</option>
-                <option value="12" selected>2012</option>
+$var['beforeYearOptions']
               </select>
 
 							&nbsp;&nbsp;&nbsp;Ricevuti dopo:
@@ -131,7 +119,7 @@ $var['mailstyle']
               /
               <select id="SearchAfterMonth" class="swheader"><option value="01">Gen</option><option value="02">Feb</option><option value="03">Mar</option><option value="04">Apr</option><option value="05">Mag</option><option value="06">Giu</option><option value="07">Lug</option><option value="08">Ago</option><option value="09">Set</option><option value="10">Ott</option><option value="11">Nov</option><option value="12">Dic</option></select>
               /
-			  <select id="SearchAfterYear" class="swheader"><option value="00">2000</option><option value="01">2001</option><option value="02">2002</option><option value="03">2003</option><option value="04">2004</option><option value="05">2005</option><option value="06">2006</option><option value="07">2007</option><option value="08">2008</option><option value="09">2009</option><option value="10">2010</option><option value="11">2010</option><option value="12">2012</option></select>
+			  <select id="SearchAfterYear" class="swheader">$var['afterYearOptions']</select>
 							<br />
 							<input type="checkbox" id="SearchAttachments" value="1">&nbsp;Messaggi con allegati
 							&nbsp;&nbsp;&nbsp;<input type="checkbox" id="SearchFlagged" value="1">&nbsp;Messaggi con flag (spuntati)

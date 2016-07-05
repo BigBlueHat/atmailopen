@@ -105,13 +105,6 @@ function checkAgreement(form)
 <h1>Atmail Pre-installation check</h1>
 <?php endif; ?>
 
-			<?php if(defined('ATMAIL_OPEN_SOURCE') && $var['step'] != '0'): ?>
-			<h1>Atmail-Open  Installation</h1>
-
-			<?php elseif(!defined('ATMAIL_OPEN_SOURCE') && $var['step'] != '0'): ?>
-			<h1>Atmail WebMail Client Installation</h1>
-			<?php endif; ?>
-
 			<?php echo $var['output'] ?>
 		</div>
 		<div id="footer"></div>

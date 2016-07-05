@@ -29,6 +29,7 @@ class MailParser
 
     var $path;
 
+    var $parent_ctype = array();
 
 	/**
 	 * Constructor
@@ -58,7 +59,6 @@ class MailParser
 			$this->_extract_parts($decoded[$message]);
 		}
 
-		//var_dump($decoded);
 		$this->headers = $this->_clean_headers($decoded[0]['Headers']);
 
 		$this->dump_attachments();
@@ -73,16 +73,19 @@ class MailParser
 
 	 	for ($i = 0; $i < $numParts; $i++)
 	 	{
-	 		if ((strpos($this->headers['content-type'], 'html') === false && $this->parts[$i]->is_attachment())
+	 		if ($this->parts[$i]->is_image() || (strpos($this->headers['content-type'], 'html') === false && $this->parts[$i]->is_attachment())
 	 		    || strpos(strtolower($this->parts[$i]->content_type), 'message/rfc822') !== false)
 	 		{
 	 			$contents = $this->parts[$i]->get_body();
 	 			$name = $this->parts[$i]->get_filename();
 
-				// Take / and .. out of the filename for security
-				$name = str_replace("/", '', $name);
-				//$name = str_replace("..", '', $name);
+				// Take path out of the filename for security
+				$name = basename($name);
 
+				// Add .safe ext so webserver will not execute any uploaded
+				// scripts if they are directly requested
+				$name .= ".safe";
+				
 				if ($name)
 				{
 		 			$fh = fopen("$this->output_dir/$name", 'w');
@@ -198,22 +201,23 @@ class MailParser
 
 	function _extract_parts($message)
 	{
-	    if (is_array($message) && isset($message['Parts']))
+	    if (is_array($message) && isset($message['Parts']) && count($message['Parts'])) {
+	        $this->parent_ctype[] = $message['Headers']['content-type:'];
             $parts =& $message['Parts'];
-
-		if (isset($parts) && count($parts))
+	    }
+	    
+		if (isset($parts))
 		{
-			$this->parent_ctype = $message['Headers']['content-type:'];
-
 			foreach ($parts as $part)
 			{
+			    $this->parent_ctype[] = $message['Headers']['content-type:'];
 				$this->_extract_parts($part);
 			}
 		}
 		else
 		{
 		    $part = new Message_Part($message);
-		    $part->parent_ctype = $this->parent_ctype;
+		    $part->parent_ctype = array_pop($this->parent_ctype);
 	        $this->parts[] = $part;
 		}
 	}

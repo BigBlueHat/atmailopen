@@ -499,6 +499,7 @@ function LoadMsgs(Folder, Start, FolderLoad) {
 
 		if (!Folder) Folder = "Inbox";
 		if (!Start || Start < 0) Start = 0;
+
 		MsgListData["CurrentFolder"] = Folder;
 
 		MessagesReq = false;
@@ -1350,9 +1351,10 @@ function ToggleVideo() {
 
 function LoadFolders(FolderSet) {
 	if (!FolderSet) FolderSet = "";
-
-	if (TestAjaxFrame("Inbox", "&To=" + FolderSet)) return;
-
+    
+    //FolderSet = Url.decode(FolderSet);
+	if (TestAjaxFrame("Inbox", "To=" + Url.encode(FolderSet))) return;
+    
 	ObjFolderBox = document.getElementById("FolderBox");
 	ObjFolderBox.innerHTML = '';
 
@@ -1509,7 +1511,7 @@ function LoadFolders(FolderSet) {
 			}
 		}
 	} else {
-		FieldInFocus = false;
+	    FieldInFocus = false;
 		for (var i in MsgListData["Folders"]) {
 			ObjFLTableTbodyTr = document.createElement("tr");
 			ObjFLTableTbodyTrTd = document.createElement("td");
@@ -2050,7 +2052,7 @@ function MoveMsgs(MoveTo) {
 		if(MsgListData["CurrentFolder"] == 'Search' && ( MailType == 'pop3' || MailType == 'imap') )	{
 			POSTString += "&Folder=Inbox";
 		} else	{
-			POSTString += "&Folder=" + escape(MsgListData["CurrentFolder"]);
+			POSTString += "&Folder=" + Url.encode(MsgListData["CurrentFolder"]);
 		}
 
 		if(MoveTo == 'erase' && !confirm(Lang_AlertPerm)) return false;
@@ -2074,8 +2076,8 @@ function MoveMessagesReqChange() {
 				// Check the message was moved successfully
 				if(status == 1)	{
 				DeleteMsgs();
-				} else	{
-				alert(Lang_MoveHead + "\r" + Lang_MoveHead2 + "\r\r* " + Lang_MoveReason1 + "\r\r* " + Lang_MoveReason2 + "\r\r* " + Lang_MoveReason3);
+				} else if(status == 0) {
+				    alert(MoveMessagesReq.responseXML.getElementsByTagName("message")[0].firstChild.data)
 				}
 			} catch(e) { alert('Error deleting message - Please reload mailbox'); }
 		}
@@ -2360,7 +2362,7 @@ function ReadMsg(ShowMsg, FoldersLoaded, Reply, DisplayImages) {
 
 		if (!DisplayImages && IsMsgLoaded(MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][0]) != "false") {
 			if (Reply) {
-				ComposeMsg(true);
+				ComposeMsg(Reply);
 			} else {
 				ReadMsg(IsMsgLoaded(MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][0]));
 			}
@@ -2468,7 +2470,7 @@ function ReadMsgReqChange() {
 			}
 			DataIsLoading(false);
 			if (ReadMsgReply) {
-				ComposeMsg(true);
+				ComposeMsg(ReadMsgReply);
 			} else {
 				ReadMsg(MsgReaderData.length - 1);
 			}
@@ -2520,7 +2522,7 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 	DataIsLoading(true);
 
 	// Generate a new unique ID for the 'attachments' panel
-	if (!Reply) ReadMsgReply = null;
+	if (!ReadMsgReply) ReadMsgReply = null;
 	// Reset the Videostream each time
 	VideoStreamUID = null;
 	// If we are using firefox, enable selection so users can type!
@@ -2529,7 +2531,7 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 	MsgListData["Views"]["MsgListViewer"] = false;
 	LoadFolders("ComposeMsg");
 	var ShowMsg = null;
-	if (Reply == true) ShowMsg = IsMsgLoaded(MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][0]);
+	if (Reply) ShowMsg = IsMsgLoaded(MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][0]);
 
 	document.getElementById("MsgListViewer").style.display = "none";
 	document.getElementById("MsgReader").style.display = "none";
@@ -2647,11 +2649,13 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 	var OnKeyUp = "if (this.value.length > 35) { this.style.height = '40px'; } else this.style.height='22px'; ";
 	ObjMRTableTbodyTrTdTableTbodyTrTdInput.onkeyup = new Function(OnKeyUp);
 
-	if (Reply == true) {
+	if (Reply) {
 		if (ReadMsgReply == "Reply") {
 			ObjMRTableTbodyTrTdTableTbodyTrTdInput.value = MsgReaderData[ShowMsg][18];
 		} else if (ReadMsgReply == "ReplyAll") {
 			ObjMRTableTbodyTrTdTableTbodyTrTdInput.value = MsgReaderData[ShowMsg][18] + ", " + MsgReaderData[ShowMsg][5];
+		} else if (ReadMsgReply == "Open") {
+		    ObjMRTableTbodyTrTdTableTbodyTrTdInput.value = MsgReaderData[ShowMsg][5]; 
 		}
 	} else if(To)	{
 			ObjMRTableTbodyTrTdTableTbodyTrTdInput.value = To;
@@ -2742,6 +2746,8 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 	if (ReadMsgReply == "ReplyAll") {
 		if (ObjMRTableTbodyTrTdTableTbodyTrTdInput.value) ObjMRTableTbodyTrTdTableTbodyTrTdInput.value += ", ";
 		ObjMRTableTbodyTrTdTableTbodyTrTdInput.value += MsgReaderData[ShowMsg][6];
+	} else if (ReadMsgReply == "Open") {
+	    ObjMRTableTbodyTrTdTableTbodyTrTdInput.value += MsgReaderData[ShowMsg][6];
 	}
 	ObjMRTableTbodyTrTdTableTbodyTrTd.appendChild(ObjMRTableTbodyTrTdTableTbodyTrTdInput);
 	ObjMRTableTbodyTrTdTableTbodyTr.appendChild(ObjMRTableTbodyTrTdTableTbodyTrTd);
@@ -2936,7 +2942,7 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 	ObjMRTableTbodyTrTdTableTbodyTrTdInput = document.createElement("input");
 	ObjMRTableTbodyTrTdTableTbodyTrTdInput.id = "ComposeMsgSubject";
 	ObjMRTableTbodyTrTdTableTbodyTrTdInput.type = "text";
-	if (Reply == true) {
+	if (Reply) {
 	ObjMRTableTbodyTrTdTableTbodyTrTdInput.value = TestSubjectReply(ReadMsgReply, MsgReaderData[ShowMsg][2] );
 	}
 	ObjMRTableTbodyTrTdTableTbodyTrTdInput.style.width = "100%";
@@ -3005,10 +3011,11 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 	ObjMRTableTbodyTrTd.width = "100%";
 	ObjMRTableTbodyTrTd.height = "100%";
 	if (NewHeaderStyle == false) {
-		ObjMRTableTbodyTrTd.style.paddingLeft = "1px";
-		ObjMRTableTbodyTrTd.style.paddingTop = "10px";
+		ObjMRTableTbodyTrTd.style.paddingLeft = "0px";
+		ObjMRTableTbodyTrTd.style.paddingTop = "0px";
 	}
-
+	ObjMRTableTbodyTrTd.style.border='1px solid #EEE';
+	
 	ObjMRTableTbodyTrTdDiv = document.createElement("div");
 	ObjMRTableTbodyTrTdDiv.id = "SpellCheckerBox";
 	ObjMRTableTbodyTrTdDiv.style.display = "none";
@@ -3033,9 +3040,9 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 		ObjMRTableTbodyTrTdTextArea.style.height="500px";
 	}
 	if (NewHeaderStyle == true) {
-		ObjMRTableTbodyTrTdTextArea.style.border = "1px solid #bad4ea";
+		//ObjMRTableTbodyTrTdTextArea.style.border = "2px solid #bad4ea";
 	} else {
-		ObjMRTableTbodyTrTdTextArea.style.border = "1px solid silver";
+		//ObjMRTableTbodyTrTdTextArea.style.border = "2px solid silver";
 	}
 
 	ObjMRTableTbodyTrTdTextArea.className = "ObjMRTableTbodyTrTdTextArea";
@@ -3058,8 +3065,7 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 		Signature = Signature.replace(/<\/?[^>]+>/gi, "");
 	}
 
-	if (Reply == true) {
-
+	if (Reply) {
 		var MsgFrom = MsgReaderData[ShowMsg][3];
 
 		// Format the reply as a text
@@ -3082,9 +3088,7 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 
 			}
 
-
 			ObjMRTableTbodyTrTdTextArea.value = ReplyText;
-
 			ObjMRTableTbodyTrTdTextArea.focus();
 
 		} else	{
@@ -3099,14 +3103,21 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 			// Convert into HTML friendly format
 			MsgFrom = MsgFrom.replace(/</, '&lt;');
 			MsgFrom = MsgFrom.replace(/>/, '&gt;');
-
-			// Apply our default stylesheet to the message for fonts
-			ObjMsgContainerDiv.innerHTML = "<style> BODY { font-family:Arial, Helvetica, sans-serif;font-size:12px; }</style><br><br>On " + MsgReaderData[ShowMsg][4] + " , " + MsgFrom + " wrote:<br><br>";
-			ObjMsgContainerDiv.innerHTML += "<BLOCKQUOTE style='BORDER-LEFT: #5167C6 2px solid; MARGIN-LEFT: 5px; MARGIN-RIGHT: 0px; PADDING-LEFT: 5px; PADDING-RIGHT: 0px'>" + MsgReaderData[ShowMsg][8] + "</BLOCKQUOTE>";
-			ObjMRTableTbodyTrTd.appendChild(ObjMsgContainerDiv);
-
-			if (Reply != "Open") ObjMRTableTbodyTrTdTextArea.appendChild(document.createTextNode("<BR>" + Signature));
-
+				    
+		    // MsgReaderData[ShowMsg][2] == subject
+		    // MsgReaderData[ShowMsg][5] == To
+		    // MsgReaderData[ShowMsg][6] == CC?
+			if (Reply != "Open") {
+    			// Apply our default stylesheet to the message for fonts
+    			ObjMsgContainerDiv.innerHTML = "<style> BODY { font-family:Arial, Helvetica, sans-serif;font-size:12px; }</style><br><br>On " + MsgReaderData[ShowMsg][4] + " , " + MsgFrom + " wrote:<br><br>";
+    			ObjMsgContainerDiv.innerHTML += "<BLOCKQUOTE style='BORDER-LEFT: #5167C6 2px solid; MARGIN-LEFT: 5px; MARGIN-RIGHT: 0px; PADDING-LEFT: 5px; PADDING-RIGHT: 0px'>" + MsgReaderData[ShowMsg][8] + "</BLOCKQUOTE>";
+    			ObjMRTableTbodyTrTd.appendChild(ObjMsgContainerDiv);
+			    ObjMRTableTbodyTrTdTextArea.appendChild(document.createTextNode("<BR>" + Signature));
+			} else {
+    			ObjMsgContainerDiv.innerHTML += MsgReaderData[ShowMsg][8];
+    			ObjMRTableTbodyTrTd.appendChild(ObjMsgContainerDiv);
+			}
+			
 			if(window.ActiveXObject) {
 				ObjMRTableTbodyTrTdTextArea.innerText += ObjMsgContainerDiv.innerHTML;
 			} else {
@@ -3114,13 +3125,8 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 			}
 
 			ObjMRTableTbodyTrTdTextArea.focus();
-
-
 		}
-
-
 	} else	{
-
 		if (ComposeMode == "HTML") {
 				ObjMRTableTbodyTrTdTextArea.appendChild(document.createTextNode("<BR>" + Signature));
 		} else	{
@@ -3133,7 +3139,6 @@ function ComposeMsg(Reply, To, Cc, Bcc) {
 	}
 
 	ObjMRTableTbodyTrTd.appendChild(ObjMRTableTbodyTrTdTextArea);
-
 	ObjMRTableTbodyTr.appendChild(ObjMRTableTbodyTrTd);
 
 	if (ComposeMode == "HTML") {
@@ -3872,7 +3877,9 @@ function SendMessagesReqChange() {
 					ShowEmailSentNotice();
 
 					} else	{
-					alert(SendMessagesReq.responseXML.getElementsByTagName("StatusMessage")[0].firstChild.data);
+				    	alert(SendMessagesReq.responseXML.getElementsByTagName("StatusMessage")[0].firstChild.data);
+    	    		    LoadFolders();
+			    		LoadMsgs(MsgListData['CurrentFolder']);
 					}
 
 				return 0;
@@ -4252,40 +4259,46 @@ function MarkMessage(Flag)	{
 
 			MarkMessageReq = createXMLHttpRequest();
 
-			var id = MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][0];
-			var folder = MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][1];
-			var uidl = MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][12];
-
-			calc = CalcMoveMsgs(id, folder);
-			MarkMessageReq.open("GET", "showmail.php?ajax=1&Folder=" + encodeURIComponent(folder) + "&id=" + encodeURIComponent(calc) + "&Flag=" +encodeURIComponent(Flag), true);
+			var ids = '';
+			var folders = '';
+			
+			for (i in MsgListData["Ctrl"]["Selected"]) {
+				ids += "&id[]=" + MsgListData["Data"][MsgListData["Ctrl"]["Selected"][i]][0];
+				folders += "&folders[]=" + Url.encode(MsgListData["Data"][MsgListData["Ctrl"]["Selected"][i]][1]);
+				//uidl += MsgListData["Data"][MsgListData["Ctrl"]["Selected"][i]][12];
+			}
+			
+			MarkMessageReq.open("GET", "showmail.php?ajax=1" + folders + ids + "&Flag=" + encodeURIComponent(Flag), true);
 			MarkMessageReq.send(null);
 
-			if (Flag == 'o') {
-				MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][9] = "read";
-				if (window.ActiveXObject) {
-					document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][0]).src = "imgs/simple/shim.gif";
-					document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][0]).style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='imgs/simple/icon_read.png', sizingMethod='image')";
-				} else {
-					document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][0]).src = "imgs/simple/icon_read.png";
+			for (i in MsgListData["Ctrl"]["Selected"]) {
+				if (Flag == 'o') {
+					MsgListData["Data"][MsgListData["Ctrl"]["Selected"][i]][9] = "read";
+					if (window.ActiveXObject) {
+						document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][i]).src = "imgs/simple/shim.gif";
+						document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][i]).style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='imgs/simple/icon_read.png', sizingMethod='image')";
+					} else {
+						document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][i]).src = "imgs/simple/icon_read.png";
+					}
+					document.getElementById("ListBoxMsgFrom" + MsgListData["Ctrl"]["Selected"][i]).className = "ObjMLTableTbodyTrTdDiv2";
+					document.getElementById("ListBoxMsgSubject" + MsgListData["Ctrl"]["Selected"][i]).className = "ObjMLTableTbodyTrTdDiv2";
+					document.getElementById("ListBoxMsgDate" + MsgListData["Ctrl"]["Selected"][i]).className = "ObjMLTableTbodyTrTdDiv2";
+					document.getElementById("ListBoxMsgSize" + MsgListData["Ctrl"]["Selected"][i]).className = "ObjMLTableTbodyTrTdDiv2";
+				} else if(Flag == 'x')	{
+	
+					MsgListData["Data"][MsgListData["Ctrl"]["Selected"][i]][9] = "unread";
+					if (window.ActiveXObject) {
+						document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][i]).src = "imgs/simple/shim.gif";
+						document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][i]).style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='imgs/simple/icon_unread.png', sizingMethod='image')";
+					} else {
+						document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][i]).src = "imgs/simple/icon_unread.png";
+					}
+	
+					document.getElementById("ListBoxMsgFrom" + MsgListData["Ctrl"]["Selected"][i]).className = "ObjMLTableTbodyTrTdDivBold";
+					document.getElementById("ListBoxMsgSubject" + MsgListData["Ctrl"]["Selected"][i]).className = "ObjMLTableTbodyTrTdDivBold";
+					document.getElementById("ListBoxMsgDate" + MsgListData["Ctrl"]["Selected"][i]).className = "ObjMLTableTbodyTrTdDivBold";
+					document.getElementById("ListBoxMsgSize" + MsgListData["Ctrl"]["Selected"][i]).className = "ObjMLTableTbodyTrTdDivBoldSize";
 				}
-				document.getElementById("ListBoxMsgFrom" + MsgListData["Ctrl"]["Selected"][0]).className = "ObjMLTableTbodyTrTdDiv2";
-				document.getElementById("ListBoxMsgSubject" + MsgListData["Ctrl"]["Selected"][0]).className = "ObjMLTableTbodyTrTdDiv2";
-				document.getElementById("ListBoxMsgDate" + MsgListData["Ctrl"]["Selected"][0]).className = "ObjMLTableTbodyTrTdDiv2";
-				document.getElementById("ListBoxMsgSize" + MsgListData["Ctrl"]["Selected"][0]).className = "ObjMLTableTbodyTrTdDiv2";
-			} else if(Flag == 'x')	{
-
-				MsgListData["Data"][MsgListData["Ctrl"]["Selected"][0]][9] = "unread";
-				if (window.ActiveXObject) {
-					document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][0]).src = "imgs/simple/shim.gif";
-					document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][0]).style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='imgs/simple/icon_unread.png', sizingMethod='image')";
-				} else {
-					document.getElementById("ListBoxMsgIcon" + MsgListData["Ctrl"]["Selected"][0]).src = "imgs/simple/icon_unread.png";
-				}
-
-				document.getElementById("ListBoxMsgFrom" + MsgListData["Ctrl"]["Selected"][0]).className = "ObjMLTableTbodyTrTdDivBold";
-				document.getElementById("ListBoxMsgSubject" + MsgListData["Ctrl"]["Selected"][0]).className = "ObjMLTableTbodyTrTdDivBold";
-				document.getElementById("ListBoxMsgDate" + MsgListData["Ctrl"]["Selected"][0]).className = "ObjMLTableTbodyTrTdDivBold";
-				document.getElementById("ListBoxMsgSize" + MsgListData["Ctrl"]["Selected"][0]).className = "ObjMLTableTbodyTrTdDivBoldSize";
 			}
 			DataIsLoading(false);
 }

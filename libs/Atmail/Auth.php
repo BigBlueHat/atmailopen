@@ -407,8 +407,8 @@ class Auth {
 		// Create a new SessionID for the user
 		$query = "INSERT INTO UserSession (Account, Password, SessionID, LastLogin, PasswordMD5, SessionData) VALUES(?, ?, ?, ?, ?, ?)";
 		$data  = array($this->Account, $pass, $this->SessionID, $time, md5($pass), '');
-
-		if ($atmail->db->sqldo($query, $data) != 1) {
+		$res = $atmail->db->sqldo($query, $data);
+		if ($res != 1) {
 		    return -1;
 		}
 

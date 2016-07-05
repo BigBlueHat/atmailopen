@@ -1,5 +1,5 @@
-<h2>Step 3: SMTP and Admin Email Configuration</h2>
-<p>In this step we will set the SMTP host for the sending of emails from Atmail and set the admin's email address.</p>
+<h2>Step 3: SMTP, LDAP and Admin Email Configuration</h2>
+<p>In this step we will set the SMTP host for the sending of emails, configure the optional LDAP address book integration and set the admin's email address.</p>
 
 <?php if($var['smtp_error']): ?>
 <div class="error">
@@ -10,7 +10,7 @@
 <?php endif; ?>
 
 <form action="index.php" method="POST" name="myform">
-	<input type="hidden" name="step" value="3">
+	<input type="hidden" name="step" value="3"/>
 <table>
 <tr>
 <td nowrap>
@@ -62,7 +62,33 @@
 			<td><a href="javascript://" title="help" onClick="info('smtpauth_password', event, 15000)">?</a>
 				<input type="password" id="smtpauth_password" name="smtpauth_password" value="<?php echo $var['smtpauth_password'] ?>" onFocus="info('smtpauth_password', event, 15000)"></td>
 		</tr>
-
+		
+		<tr>
+			<td><label for="smtp_host">Configure LDAP Address Book Integration</label></td>
+			<td>
+				<input type="checkbox" name="ldap_abook" onclick="showldap(this)" <?php echo $var['ldap_abook_check'] ?> />
+			</td>
+		</tr>
+		
+		<tr id="ldapserver" style="display:none">
+			<td><label for="ldap_host">LDAP Server</label></td>
+			<td>
+				<input type="text" id="ldap_server" name="ldap_server" value="<?php echo $var['ldap_server'] ?>" />
+			</td>
+		</tr>
+		<tr id="ldapbasedn" style="display:none">
+			<td><label for="ldap_host">LDAP Base DN</label></td>
+			<td>
+				<input type="text" id="ldap_base_dn" name="ldap_base_dn" value="<?php echo $var['ldap_base_dn'] ?>" />
+			</td>
+		</tr>
+		<tr id="ldappasswd" style="display:none">
+			<td><label for="ldap_host">LDAP Password</label></td>
+			<td>
+				<input type="text" id="ldap_passwd" name="ldap_passwd" value="<?php echo $var['ldap_passwd'] ?>" />
+			</td>
+		</tr>
+		
 		<?php if($var['admin_email_error']): ?>
 		<tr class="error">
 			<td colspan="2">
@@ -113,7 +139,6 @@ document.getElementById('adminemail').focus();
 <?php endif; ?>
 
 function showsmtpauth(obj) {
-
 if(obj.checked)	{
 	document.getElementById('smtpauthuser').style.display='';
 	document.getElementById('smtpauthpass').style.display='';
@@ -123,6 +148,21 @@ if(obj.checked)	{
 	document.getElementById('smtpauth_username').value ='';
 	document.getElementById('smtpauth_password').value ='';
 }
-
 }
+
+function showldap(obj) {
+if(obj.checked)	{
+	document.getElementById('ldapserver').style.display='';
+	document.getElementById('ldapbasedn').style.display='';
+	document.getElementById('ldappasswd').style.display='';
+} else {
+	document.getElementById('ldapserver').style.display='none';
+	document.getElementById('ldapbasedn').style.display='none';
+	document.getElementById('ldappasswd').style.display='none';
+	document.getElementById('ldap_server').value ='';
+	document.getElementById('ldap_base_dn').value ='';
+	document.getElementById('ldap_passwd').value ='';
+}
+}
+
 </script>

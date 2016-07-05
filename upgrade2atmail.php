@@ -390,9 +390,9 @@ $db->sqldo("CREATE TABLE `recurrencePatterns` (
   PRIMARY KEY  (`id`)
 )");
 
-$pref['installed'] => 0;
+$pref['installed'] = 0;
 $path = dirname(__FILE__);
-unlink($path . '/install/.htaccess')
+unlink($path . '/install/.htaccess');
 `rm -rf $path/fckeditor`;
 writeconf();
 

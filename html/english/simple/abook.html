@@ -177,21 +177,22 @@ var i=0
 len=aForm.elements.length
 
 for( i=0 ; i<len ; i++) {
-
-if (aForm.elements[i].name=='To' && aForm.elements[i].checked) {
-document.getElementById('addrecpTo').value +='; '+aForm.elements[i].value;
+	if (aForm.elements[i].name=='To' && aForm.elements[i].checked) {
+	document.getElementById('addrecpTo').value +='; '+aForm.elements[i].value;
+	}
+	
+	if (aForm.elements[i].name=='Cc' && aForm.elements[i].checked) {
+	document.getElementById('addrecpCc').value +='; '+aForm.elements[i].value;
+	}
+	
+	if (aForm.elements[i].name=='Bcc' && aForm.elements[i].checked) {
+	document.getElementById('addrecpBcc').value +='; '+aForm.elements[i].value;
+	}
 }
 
-if (aForm.elements[i].name=='Cc' && aForm.elements[i].checked) {
-document.getElementById('addrecpCc').value +='; '+aForm.elements[i].value;
-}
-
-if (aForm.elements[i].name=='Bcc' && aForm.elements[i].checked) {
-document.getElementById('addrecpBcc').value +='; '+aForm.elements[i].value;
-}
-
-
-}
+document.getElementById('addrecpTo').value = document.getElementById('addrecpTo').value.replace(/^; /, '');
+document.getElementById('addrecpCc').value = document.getElementById('addrecpCc').value.replace(/^; /, '');
+document.getElementById('addrecpBcc').value = document.getElementById('addrecpBcc').value.replace(/^; /, '');
 
 <!-- if($this->Ajax) { -->
 top.opencompose(document.getElementById('addrecpTo').value, document.getElementById('addrecpCc').value, document.getElementById('addrecpBcc').value);
